@@ -111,6 +111,14 @@ var lbl_coconuts: Label
 var lbl_bananas: Label
 var lbl_lotus: Label
 
+# Active Food Buffs & Cooking State
+var is_cooking: bool = false
+var speed_buff_timer: float = 0.0
+var speed_buff_mult: float = 1.0
+var jump_buff_timer: float = 0.0
+var jump_buff_mult: float = 1.0
+var buff_label: Label
+
 # Footstep Audio Timer
 var footstep_timer: float = 0.0
 
@@ -642,7 +650,7 @@ func _process(_delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	# Clicking anywhere in the window while in exploration mode captures the mouse
 	if event is InputEventMouseButton and event.pressed:
-		if not is_customizing and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		if not is_customizing and not is_cooking and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			# If user clicked on the QuickCustomizeButton, let the button handle it
 			if custom_ui != null:
 				var hud_btn = custom_ui.get_node_or_null("QuickCustomizeButton") as Button
@@ -652,10 +660,18 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# UI cancel (Escape key): close customization or release mouse
+	# UI cancel (Escape key): close customization, close cooking, or release mouse
 	if event.is_action_pressed("ui_cancel"):
 		if is_customizing:
 			toggle_customization()
+			return
+		elif is_cooking:
+			var stations = get_tree().get_nodes_in_group("cooking_stations")
+			for st in stations:
+				if st.has_method("_close_cooking_menu"):
+					st._close_cooking_menu()
+			is_cooking = false
+			capture_mouse()
 			return
 		else:
 			release_mouse()
@@ -724,10 +740,31 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	# When customizing, freeze movement
-	if is_customizing:
+	# When customizing or cooking, freeze movement
+	if is_customizing or is_cooking:
 		velocity = Vector3.ZERO
 		return
+
+	# Handle active food buffs
+	var active_buff_strings = []
+	if speed_buff_timer > 0.0:
+		speed_buff_timer -= delta
+		active_buff_strings.append("Speed +" + str(int((speed_buff_mult - 1.0) * 100)) + "% (" + str(int(speed_buff_timer)) + "s)")
+	else:
+		speed_buff_mult = 1.0
+
+	if jump_buff_timer > 0.0:
+		jump_buff_timer -= delta
+		active_buff_strings.append("Jump +" + str(int((jump_buff_mult - 1.0) * 100)) + "% (" + str(int(jump_buff_timer)) + "s)")
+	else:
+		jump_buff_mult = 1.0
+
+	if buff_label:
+		if active_buff_strings.size() > 0:
+			buff_label.text = "Buff: " + " | ".join(active_buff_strings)
+			buff_label.visible = true
+		else:
+			buff_label.visible = false
 
 	# 1. MOUNTED ON VEHICLE OR IN HAMMOCK
 	if current_vehicle != null and is_instance_valid(current_vehicle):
@@ -772,13 +809,13 @@ func _physics_process(delta: float) -> void:
 			velocity.y = 0
 		# Jump (Spacebar)
 		if Input.is_action_just_pressed("ui_accept") or Input.is_key_pressed(KEY_SPACE):
-			velocity.y = jump_velocity
+			velocity.y = jump_velocity * jump_buff_mult
 
 	# Sprint (Shift)
-	var current_speed = move_speed
+	var current_speed = move_speed * speed_buff_mult
 	var is_sprinting = Input.is_key_pressed(KEY_SHIFT)
 	if is_sprinting:
-		current_speed = sprint_speed
+		current_speed = sprint_speed * speed_buff_mult
 
 	# Input movement (WASD + Arrows)
 	var input_x: float = 0.0
@@ -891,7 +928,7 @@ func create_inventory_hud() -> void:
 	inv_panel.add_theme_stylebox_override("panel", style)
 
 	inv_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	inv_panel.anchor_left = 0.72
+	inv_panel.anchor_left = 0.58
 	inv_panel.anchor_right = 0.98
 	inv_panel.anchor_top = 0.02
 	inv_panel.anchor_bottom = 0.075
@@ -923,6 +960,19 @@ func create_inventory_hud() -> void:
 	lbl_lotus.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85))
 	hbox.add_child(lbl_lotus)
 
+	# Active Buff Display Badge
+	buff_label = Label.new()
+	buff_label.name = "BuffStatus"
+	buff_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	buff_label.text = ""
+	buff_label.visible = false
+	buff_label.add_theme_font_size_override("font_size", 14)
+	buff_label.add_theme_color_override("font_color", Color(0.72, 1.0, 0.55))
+	buff_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	buff_label.add_theme_constant_override("shadow_offset_x", 1)
+	buff_label.add_theme_constant_override("shadow_offset_y", 1)
+	hbox.add_child(buff_label)
+
 	custom_ui.add_child(inv_panel)
 
 
@@ -930,6 +980,55 @@ func add_inventory(item: String, amount: int) -> void:
 	if inventory.has(item):
 		inventory[item] += amount
 		update_inventory_ui()
+
+
+func has_item(item: String, amount: int = 1) -> bool:
+	return inventory.has(item) and inventory[item] >= amount
+
+
+func remove_inventory(item: String, amount: int = 1) -> bool:
+	if has_item(item, amount):
+		inventory[item] -= amount
+		update_inventory_ui()
+		return true
+	return false
+
+
+func apply_food_buff(buff_name: String, duration: float, mult: float, desc: String) -> void:
+	if buff_name == "speed":
+		speed_buff_mult = mult
+		speed_buff_timer = duration
+	elif buff_name == "jump":
+		jump_buff_mult = mult
+		jump_buff_timer = duration
+	elif buff_name == "serenity":
+		speed_buff_mult = 1.30
+		jump_buff_mult = 1.30
+		speed_buff_timer = duration
+		jump_buff_timer = duration
+
+	AudioSynth.play("eat", 2.0)
+
+	if custom_ui:
+		var banner = Label.new()
+		banner.text = desc
+		banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		banner.add_theme_font_size_override("font_size", 18)
+		banner.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
+		banner.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+		banner.add_theme_constant_override("shadow_offset_x", 1)
+		banner.add_theme_constant_override("shadow_offset_y", 1)
+		banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		banner.anchor_left = 0.2
+		banner.anchor_right = 0.8
+		banner.anchor_top = 0.16
+		custom_ui.add_child(banner)
+
+		var tw = custom_ui.create_tween()
+		tw.tween_interval(3.2)
+		tw.tween_property(banner, "modulate:a", 0.0, 1.0)
+		tw.tween_callback(banner.queue_free)
 
 
 func update_inventory_ui() -> void:

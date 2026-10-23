@@ -28,6 +28,8 @@ static func init_audio(parent: Node) -> void:
 	sound_cache["pagoda_bell"] = _synth_pagoda_bell()
 	sound_cache["rain"] = _synth_rain()
 	sound_cache["thunder"] = _synth_thunder()
+	sound_cache["sizzle"] = _synth_sizzle()
+	sound_cache["eat"] = _synth_eat()
 	
 	# Create pool of AudioStreamPlayers
 	for i in range(8):
@@ -489,5 +491,65 @@ static func _synth_thunder() -> AudioStreamWAV:
 	var wav = _build_wav(total_samples)
 	wav.data = data
 	return wav
+
+
+static func _synth_sizzle() -> AudioStreamWAV:
+	# Sizzling hot charcoal / pan sound
+	var duration = 1.3
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	var last_val = 0.0
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var env = sin(PI * (t / duration))
+		var white = randf_range(-1.0, 1.0)
+		var high = white - last_val
+		last_val = white
+
+		var pop = 0.0
+		if (i % 220) == 0 and randf() > 0.4:
+			pop = randf_range(-0.7, 0.7)
+
+		var val = clampf((high * 0.45 + pop * 0.55) * env, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
+
+static func _synth_eat() -> AudioStreamWAV:
+	# Crisp bite and munch sound
+	var duration = 0.65
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var val = 0.0
+		if t < 0.28:
+			var env = exp(-t * 22.0)
+			val += randf_range(-0.7, 0.7) * env
+		if t >= 0.22 and t < 0.55:
+			var t2 = t - 0.22
+			var env2 = exp(-t2 * 20.0)
+			val += randf_range(-0.6, 0.6) * env2
+
+		val = clampf(val * 0.75, -1.0, 1.0)
+		var ival = clampi(int(val * 30000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
 
 

@@ -12,6 +12,7 @@ const CountrysideFireflies = preload("res://scripts/fireflies.gd")
 const CountrysideSmokeFX = preload("res://scripts/smoke_fx.gd")
 const CountrysideSignpost = preload("res://scripts/signpost.gd")
 const WeatherSystem = preload("res://scripts/weather_system.gd")
+const CountrysideCookingStation = preload("res://scripts/cooking_station.gd")
 
 # Cambo Countryside - Main World Controller
 var day_night: DayNightCycle
@@ -35,7 +36,7 @@ func _ready() -> void:
 	_spawn_chickens()
 	_spawn_harvestables()
 	_spawn_fireflies()
-	_spawn_smoke_fx()
+	_spawn_cooking_station()
 	_spawn_signposts()
 	
 	# 4. Enhance HUD with Time Display & Key Guides
@@ -250,44 +251,13 @@ func _spawn_fireflies() -> void:
 	add_child(ff4)
 
 
-func _spawn_smoke_fx() -> void:
-	# Clay stove cooking hearth near the stilt house
-	var hearth = Node3D.new()
-	hearth.name = "VillageCookingHearth"
-	hearth.position = Vector3(-21.8, 0.05, 8.2)
-	add_child(hearth)
-
-	# Clay stove base mesh
-	var stove_mesh := CylinderMesh.new()
-	stove_mesh.top_radius = 0.32
-	stove_mesh.bottom_radius = 0.36
-	stove_mesh.height = 0.42
-	var stove_inst := MeshInstance3D.new()
-	stove_inst.mesh = stove_mesh
-	stove_inst.position.y = 0.21
-	var stove_mat := StandardMaterial3D.new()
-	stove_mat.albedo_color = Color(0.68, 0.42, 0.28) # Terracotta clay
-	stove_mat.roughness = 0.92
-	stove_inst.material_override = stove_mat
-	hearth.add_child(stove_inst)
-
-	# Clay cooking pot on top
-	var pot_mesh := CylinderMesh.new()
-	pot_mesh.top_radius = 0.26
-	pot_mesh.bottom_radius = 0.22
-	pot_mesh.height = 0.28
-	var pot_inst := MeshInstance3D.new()
-	pot_inst.mesh = pot_mesh
-	pot_inst.position.y = 0.52
-	var pot_mat := StandardMaterial3D.new()
-	pot_mat.albedo_color = Color(0.22, 0.20, 0.18) # Soot blackened clay pot
-	pot_inst.material_override = pot_mat
-	hearth.add_child(pot_inst)
-
-	# Smoke FX rising from the pot
-	var smoke = CountrysideSmokeFX.new()
-	smoke.position = Vector3(0, 0.65, 0)
-	hearth.add_child(smoke)
+func _spawn_cooking_station() -> void:
+	# Traditional clay stove cooking station with prep table & smoke under stilt house
+	var station = CountrysideCookingStation.new()
+	station.name = "VillageCookingStation"
+	station.position = Vector3(-21.8, 0.05, 8.2)
+	station.rotation_degrees.y = 75.0
+	add_child(station)
 
 
 func _spawn_signposts() -> void:
