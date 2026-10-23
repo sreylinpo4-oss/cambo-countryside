@@ -61,17 +61,17 @@ func get_time_string() -> String:
 		
 	var phase_name = ""
 	if time_of_day >= 5.0 and time_of_day < 7.5:
-		phase_name = "🌅 Sunrise (ព្រឹកព្រហាម)"
+		phase_name = "Sunrise (ព្រឹកព្រហាម)"
 	elif time_of_day >= 7.5 and time_of_day < 11.5:
-		phase_name = "☀️ Morning (ពេលព្រឹក)"
+		phase_name = "Morning (ពេលព្រឹក)"
 	elif time_of_day >= 11.5 and time_of_day < 14.5:
-		phase_name = "🌞 Midday (ថ្ងៃត្រង់)"
+		phase_name = "Midday (ថ្ងៃត្រង់)"
 	elif time_of_day >= 14.5 and time_of_day < 17.5:
-		phase_name = "🌾 Afternoon (រសៀល)"
+		phase_name = "Afternoon (រសៀល)"
 	elif time_of_day >= 17.5 and time_of_day < 19.5:
-		phase_name = "🌇 Golden Dusk (សន្ធ្យា)"
+		phase_name = "Golden Dusk (សន្ធ្យា)"
 	else:
-		phase_name = "🌙 Starry Night (ពេលយប់)"
+		phase_name = "Starry Night (ពេលយប់)"
 		
 	return "%02d:%02d %s | %s" % [display_h, mins, period, phase_name]
 

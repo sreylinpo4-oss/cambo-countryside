@@ -167,7 +167,7 @@ func _animate_tail_and_ears(delta: float) -> void:
 
 func _spawn_heart_effect() -> void:
 	var label = Label3D.new()
-	label.text = "❤️ គោខ្មែរ"
+	label.text = "គោខ្មែរ"
 	label.font_size = 36
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.position = Vector3(0, 2.3, 0)

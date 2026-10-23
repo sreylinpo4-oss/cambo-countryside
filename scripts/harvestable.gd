@@ -21,11 +21,11 @@ func _ready() -> void:
 	
 	match item_type:
 		ItemType.COCONUT:
-			interact_prompt = "Pick Coconut (បេះផ្លែដូង 🥥)"
+			interact_prompt = "Pick Coconut (បេះផ្លែដូង)"
 		ItemType.BANANA:
-			interact_prompt = "Harvest Bananas (បេះចេក 🍌)"
+			interact_prompt = "Harvest Bananas (បេះចេក)"
 		ItemType.LOTUS:
-			interact_prompt = "Pick Sacred Lotus (បេះផ្កាឈូក 🪷)"
+			interact_prompt = "Pick Sacred Lotus (បេះផ្កាឈូក)"
 
 
 func interact(player: Node) -> void:
@@ -40,27 +40,23 @@ func interact(player: Node) -> void:
 	AudioSynth.play("pickup", -2.0)
 	
 	var item_name = ""
-	var icon = ""
 	match item_type:
 		ItemType.COCONUT:
 			item_name = "Fresh Coconut"
-			icon = "🥥"
 			if player.has_method("add_inventory"):
 				player.add_inventory("coconut", 1)
 		ItemType.BANANA:
 			item_name = "Sweet Bananas"
-			icon = "🍌"
 			if player.has_method("add_inventory"):
 				player.add_inventory("banana", 1)
 		ItemType.LOTUS:
 			item_name = "Sacred Lotus"
-			icon = "🪷"
 			if player.has_method("add_inventory"):
 				player.add_inventory("lotus", 1)
 				
 	# Floating notification label
 	var label = Label3D.new()
-	label.text = "+1 " + icon + " " + item_name
+	label.text = "+1 " + item_name
 	label.font_size = 36
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.position = global_position + Vector3(0, 0.8, 0)

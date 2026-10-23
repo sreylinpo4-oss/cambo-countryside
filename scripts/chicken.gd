@@ -43,7 +43,7 @@ func interact(player: Node) -> void:
 	
 	# Spawn feeding label
 	var label = Label3D.new()
-	label.text = "🌾 +Feeding Rice!"
+	label.text = "+Feeding Rice!"
 	label.font_size = 32
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.position = Vector3(0, 0.8, 0)

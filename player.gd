@@ -437,7 +437,7 @@ func create_customization_ui() -> void:
 	# 1. Quick HUD Button to open customization anytime
 	var hud_btn := Button.new()
 	hud_btn.name = "QuickCustomizeButton"
-	hud_btn.text = " 👕 Customize (C) "
+	hud_btn.text = " Customize (C) "
 	hud_btn.position = Vector2(24, 75)
 	hud_btn.add_theme_font_size_override("font_size", 14)
 	hud_btn.pressed.connect(toggle_customization)
@@ -477,7 +477,7 @@ func create_customization_ui() -> void:
 
 	# Header Title
 	var title := Label.new()
-	title.text = "🇰🇭 CUSTOMIZE CHARACTER\nកែប្រែតួអង្គរបស់អ្នក"
+	title.text = "CUSTOMIZE CHARACTER\nកែប្រែតួអង្គរបស់អ្នក"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 18)
 	title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.72))
@@ -487,23 +487,23 @@ func create_customization_ui() -> void:
 	vbox.add_child(sep)
 
 	# Selector Rows
-	lbl_hat = add_option_row(vbox, "🎩 Headwear / មួក",
+	lbl_hat = add_option_row(vbox, "Headwear / មួក",
 		func(): cycle_option("hat", -1, HATS.size()),
 		func(): cycle_option("hat", 1, HATS.size()))
 
-	lbl_krama = add_option_row(vbox, "🧣 Khmer Krama / ក្រមា",
+	lbl_krama = add_option_row(vbox, "Khmer Krama / ក្រមា",
 		func(): cycle_option("krama", -1, KRAMAS.size()),
 		func(): cycle_option("krama", 1, KRAMAS.size()))
 
-	lbl_shirt = add_option_row(vbox, "👕 Shirt / អាវ",
+	lbl_shirt = add_option_row(vbox, "Shirt / អាវ",
 		func(): cycle_option("shirt", -1, SHIRT_COLORS.size()),
 		func(): cycle_option("shirt", 1, SHIRT_COLORS.size()))
 
-	lbl_pants = add_option_row(vbox, "👖 Pants / ខោ",
+	lbl_pants = add_option_row(vbox, "Pants / ខោ",
 		func(): cycle_option("pants", -1, PANTS_COLORS.size()),
 		func(): cycle_option("pants", 1, PANTS_COLORS.size()))
 
-	lbl_skin = add_option_row(vbox, "🧑 Skin Tone / ពណ៌សម្បុរ",
+	lbl_skin = add_option_row(vbox, "Skin Tone / ពណ៌សម្បុរ",
 		func(): cycle_option("skin", -1, SKIN_COLORS.size()),
 		func(): cycle_option("skin", 1, SKIN_COLORS.size()))
 
@@ -512,12 +512,12 @@ func create_customization_ui() -> void:
 
 	# Action Buttons (Randomize & Save)
 	var btn_rand := Button.new()
-	btn_rand.text = "🎲 Randomize Outfit (ចៃដន្យ)"
+	btn_rand.text = "Randomize Outfit (ចៃដន្យ)"
 	btn_rand.pressed.connect(randomize_costume)
 	vbox.add_child(btn_rand)
 
 	var btn_save := Button.new()
-	btn_save.text = "✔ Save & Resume (រក្សាទុក)"
+	btn_save.text = "Save & Resume (រក្សាទុក)"
 	btn_save.add_theme_font_size_override("font_size", 16)
 	btn_save.pressed.connect(func(): toggle_customization())
 	vbox.add_child(btn_save)
@@ -607,7 +607,7 @@ func _process(_delta: float) -> void:
 	if current_vehicle != null:
 		if interaction_label and interaction_panel:
 			if current_vehicle is CountrysideBicycle:
-				interaction_label.text = "[ E ] Dismount Bicycle (ចុះពីលើកង់)  |  [ Space / F ] Ring Bell 🔔"
+				interaction_label.text = "[ E ] Dismount Bicycle (ចុះពីលើកង់)  |  [ Space / F ] Ring Bell"
 			elif current_vehicle is CambodianWaterBuffalo:
 				interaction_label.text = "[ E ] Dismount Buffalo (ចុះពីលើក្របី)"
 			elif current_vehicle is CountrysideHammock:
@@ -898,21 +898,21 @@ func create_inventory_hud() -> void:
 
 	lbl_coconuts = Label.new()
 	lbl_coconuts.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl_coconuts.text = "🥥 0"
+	lbl_coconuts.text = "Coconuts: 0"
 	lbl_coconuts.add_theme_font_size_override("font_size", 15)
 	lbl_coconuts.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85))
 	hbox.add_child(lbl_coconuts)
 
 	lbl_bananas = Label.new()
 	lbl_bananas.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl_bananas.text = "🍌 0"
+	lbl_bananas.text = "Bananas: 0"
 	lbl_bananas.add_theme_font_size_override("font_size", 15)
 	lbl_bananas.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85))
 	hbox.add_child(lbl_bananas)
 
 	lbl_lotus = Label.new()
 	lbl_lotus.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl_lotus.text = "🪷 0"
+	lbl_lotus.text = "Lotus: 0"
 	lbl_lotus.add_theme_font_size_override("font_size", 15)
 	lbl_lotus.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85))
 	hbox.add_child(lbl_lotus)
@@ -928,11 +928,11 @@ func add_inventory(item: String, amount: int) -> void:
 
 func update_inventory_ui() -> void:
 	if lbl_coconuts:
-		lbl_coconuts.text = "🥥 " + str(inventory["coconut"])
+		lbl_coconuts.text = "Coconuts: " + str(inventory["coconut"])
 	if lbl_bananas:
-		lbl_bananas.text = "🍌 " + str(inventory["banana"])
+		lbl_bananas.text = "Bananas: " + str(inventory["banana"])
 	if lbl_lotus:
-		lbl_lotus.text = "🪷 " + str(inventory["lotus"])
+		lbl_lotus.text = "Lotus: " + str(inventory["lotus"])
 
 
 # -------------------------------------------------------------

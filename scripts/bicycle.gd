@@ -83,7 +83,7 @@ func ring_bell() -> void:
 	AudioSynth.play("bell", -1.0, randf_range(0.98, 1.02))
 	# Floating bell label
 	var label = Label3D.new()
-	label.text = "🔔 Ring-Ring!"
+	label.text = "Ring-Ring!"
 	label.font_size = 32
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.position = Vector3(0, 1.4, 0.4)
