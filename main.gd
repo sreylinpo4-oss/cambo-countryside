@@ -13,6 +13,7 @@ const CountrysideSmokeFX = preload("res://scripts/smoke_fx.gd")
 const CountrysideSignpost = preload("res://scripts/signpost.gd")
 const WeatherSystem = preload("res://scripts/weather_system.gd")
 const CountrysideCookingStation = preload("res://scripts/cooking_station.gd")
+const CountrysideFishingSpot = preload("res://scripts/fishing_spot.gd")
 
 # Cambo Countryside - Main World Controller
 var day_night: DayNightCycle
@@ -38,6 +39,7 @@ func _ready() -> void:
 	_spawn_fireflies()
 	_spawn_cooking_station()
 	_spawn_signposts()
+	_spawn_fishing_spots()
 	
 	# 4. Enhance HUD with Time Display & Key Guides
 	_setup_hud()
@@ -286,3 +288,20 @@ func _spawn_signposts() -> void:
 		"Rice Granary (ជង្រុកស្រូវ) ->"
 	]
 	add_child(sign2)
+
+
+func _spawn_fishing_spots() -> void:
+	# Spot 1: On the bank of Sacred Lotus Pond
+	var spot1 = CountrysideFishingSpot.new()
+	spot1.name = "FishingSpot_LotusPond"
+	spot1.position = Vector3(-20.8, 0.05, -13.2)
+	spot1.rotation_degrees.y = 135.0
+	add_child(spot1)
+
+	# Spot 2: At irrigation canal by the East Rice Paddy
+	var spot2 = CountrysideFishingSpot.new()
+	spot2.name = "FishingSpot_EastPaddy"
+	spot2.position = Vector3(17.8, 0.05, 8.2)
+	spot2.rotation_degrees.y = -90.0
+	add_child(spot2)
+

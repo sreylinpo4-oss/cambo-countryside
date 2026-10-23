@@ -30,6 +30,7 @@ static func init_audio(parent: Node) -> void:
 	sound_cache["thunder"] = _synth_thunder()
 	sound_cache["sizzle"] = _synth_sizzle()
 	sound_cache["eat"] = _synth_eat()
+	sound_cache["cast"] = _synth_cast()
 	
 	# Create pool of AudioStreamPlayers
 	for i in range(8):
@@ -550,6 +551,34 @@ static func _synth_eat() -> AudioStreamWAV:
 	var wav = _build_wav(total_samples)
 	wav.data = data
 	return wav
+
+
+static func _synth_cast() -> AudioStreamWAV:
+	# Bamboo rod swish through air
+	var duration = 0.35
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	var last_noise = 0.0
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var env = sin(PI * (t / duration))
+		var freq = 450.0 + sin(t * 12.0) * 180.0
+		var tone = sin(2.0 * PI * freq * t) * 0.4
+		var white = randf_range(-1.0, 1.0)
+		last_noise = (last_noise * 0.8) + (white * 0.2)
+		var val = (tone + last_noise * 0.5) * env * 0.45
+		val = clampf(val, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
 
 
 

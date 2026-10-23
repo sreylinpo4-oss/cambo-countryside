@@ -105,14 +105,17 @@ var interaction_label: Label
 var inventory := {
 	"coconut": 0,
 	"banana": 0,
-	"lotus": 0
+	"lotus": 0,
+	"fish": 0
 }
 var lbl_coconuts: Label
 var lbl_bananas: Label
 var lbl_lotus: Label
+var lbl_fish: Label
 
-# Active Food Buffs & Cooking State
+# Active Food Buffs, Fishing & Cooking State
 var is_cooking: bool = false
+var is_fishing: bool = false
 var speed_buff_timer: float = 0.0
 var speed_buff_mult: float = 1.0
 var jump_buff_timer: float = 0.0
@@ -650,7 +653,7 @@ func _process(_delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	# Clicking anywhere in the window while in exploration mode captures the mouse
 	if event is InputEventMouseButton and event.pressed:
-		if not is_customizing and not is_cooking and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		if not is_customizing and not is_cooking and not is_fishing and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			# If user clicked on the QuickCustomizeButton, let the button handle it
 			if custom_ui != null:
 				var hud_btn = custom_ui.get_node_or_null("QuickCustomizeButton") as Button
@@ -660,7 +663,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# UI cancel (Escape key): close customization, close cooking, or release mouse
+	# UI cancel (Escape key): close customization, close cooking, cancel fishing, or release mouse
 	if event.is_action_pressed("ui_cancel"):
 		if is_customizing:
 			toggle_customization()
@@ -672,6 +675,11 @@ func _unhandled_input(event: InputEvent) -> void:
 					st._close_cooking_menu()
 			is_cooking = false
 			capture_mouse()
+			return
+		elif is_fishing:
+			is_fishing = false
+			if right_arm: right_arm.rotation = Vector3.ZERO
+			if left_arm: left_arm.rotation = Vector3.ZERO
 			return
 		else:
 			release_mouse()
@@ -740,9 +748,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	# When customizing or cooking, freeze movement
-	if is_customizing or is_cooking:
+	# When customizing, cooking, or fishing, freeze movement
+	if is_customizing or is_cooking or is_fishing:
 		velocity = Vector3.ZERO
+		if is_fishing:
+			if right_arm:
+				right_arm.rotation_degrees.x = -62.0
+			if left_arm:
+				left_arm.rotation_degrees.x = -32.0
 		return
 
 	# Handle active food buffs
@@ -928,7 +941,7 @@ func create_inventory_hud() -> void:
 	inv_panel.add_theme_stylebox_override("panel", style)
 
 	inv_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	inv_panel.anchor_left = 0.58
+	inv_panel.anchor_left = 0.50
 	inv_panel.anchor_right = 0.98
 	inv_panel.anchor_top = 0.02
 	inv_panel.anchor_bottom = 0.075
@@ -959,6 +972,13 @@ func create_inventory_hud() -> void:
 	lbl_lotus.add_theme_font_size_override("font_size", 15)
 	lbl_lotus.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85))
 	hbox.add_child(lbl_lotus)
+
+	lbl_fish = Label.new()
+	lbl_fish.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lbl_fish.text = "Fish: 0"
+	lbl_fish.add_theme_font_size_override("font_size", 15)
+	lbl_fish.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85))
+	hbox.add_child(lbl_fish)
 
 	# Active Buff Display Badge
 	buff_label = Label.new()
@@ -1006,6 +1026,11 @@ func apply_food_buff(buff_name: String, duration: float, mult: float, desc: Stri
 		jump_buff_mult = 1.30
 		speed_buff_timer = duration
 		jump_buff_timer = duration
+	elif buff_name == "strength":
+		speed_buff_mult = 1.50
+		jump_buff_mult = 1.50
+		speed_buff_timer = duration
+		jump_buff_timer = duration
 
 	AudioSynth.play("eat", 2.0)
 
@@ -1038,6 +1063,8 @@ func update_inventory_ui() -> void:
 		lbl_bananas.text = "Bananas: " + str(inventory["banana"])
 	if lbl_lotus:
 		lbl_lotus.text = "Lotus: " + str(inventory["lotus"])
+	if lbl_fish:
+		lbl_fish.text = "Fish: " + str(inventory["fish"])
 
 
 # -------------------------------------------------------------

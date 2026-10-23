@@ -14,6 +14,7 @@ var ingredients_label: Label = null
 var btn_chek_ang: Button = null
 var btn_kralan: Button = null
 var btn_lotus_tea: Button = null
+var btn_grilled_fish: Button = null
 
 func _ready() -> void:
 	add_to_group("interactables")
@@ -203,6 +204,14 @@ func _open_cooking_menu() -> void:
 		func(): _cook_dish("Lotus Tea", {"lotus": 2}, "serenity", 60.0, 1.30, "Drank Sacred Lotus Tea! Speed & Jump +30% (60s)")
 	)
 
+	# Recipe 4: Grilled Catfish (Trey Ang Kroeung)
+	btn_grilled_fish = _create_recipe_row(
+		vbox,
+		"Grilled Catfish (ត្រីអាំងគ្រឿង)",
+		"Ingredients: 1 Fish, 1 Coconut\nBuff: Countryside Strength (+50% Speed & Jump for 90s)",
+		func(): _cook_dish("Grilled Catfish", {"fish": 1, "coconut": 1}, "strength", 90.0, 1.50, "Ate Grilled Catfish! Speed & Jump +50% (90s)")
+	)
+
 	var sep3 := HSeparator.new()
 	vbox.add_child(sep3)
 
@@ -263,8 +272,9 @@ func _update_menu_state() -> void:
 		var c = inv.get("coconut", 0)
 		var b = inv.get("banana", 0)
 		var l = inv.get("lotus", 0)
+		var f = inv.get("fish", 0)
 		if ingredients_label:
-			ingredients_label.text = "Your Ingredients: Coconuts: %d | Bananas: %d | Lotus: %d" % [c, b, l]
+			ingredients_label.text = "Your Ingredients: Coconuts: %d | Bananas: %d | Lotus: %d | Fish: %d" % [c, b, l, f]
 
 		if btn_chek_ang:
 			btn_chek_ang.disabled = not (b >= 2 and c >= 1)
@@ -272,6 +282,8 @@ func _update_menu_state() -> void:
 			btn_kralan.disabled = not (c >= 2 and b >= 1)
 		if btn_lotus_tea:
 			btn_lotus_tea.disabled = not (l >= 2)
+		if btn_grilled_fish:
+			btn_grilled_fish.disabled = not (f >= 1 and c >= 1)
 
 
 func _cook_dish(dish_name: String, cost: Dictionary, buff_type: String, duration: float, mult: float, toast_desc: String) -> void:
