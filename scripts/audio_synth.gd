@@ -7,6 +7,7 @@ static var sfx_players: Array[AudioStreamPlayer] = []
 static var ambient_day_player: AudioStreamPlayer
 static var ambient_night_player: AudioStreamPlayer
 static var ambient_rain_player: AudioStreamPlayer
+static var ambient_cicada_player: AudioStreamPlayer
 static var folk_music_player: AudioStreamPlayer
 
 const MIX_RATE: int = 22050
@@ -40,6 +41,8 @@ static func init_audio(parent: Node) -> void:
 	sound_cache["roneat_mid"] = _synth_roneat_note(392.0, 0.8)
 	sound_cache["roneat_low"] = _synth_roneat_note(293.66, 0.9)
 	sound_cache["folk_melody"] = _synth_roneat_melody()
+	sound_cache["cicadas"] = _synth_cicadas()
+	sound_cache["water_stream"] = _synth_water_stream()
 	
 	# Create pool of AudioStreamPlayers
 	for i in range(8):
@@ -79,6 +82,14 @@ static func init_audio(parent: Node) -> void:
 	folk_music_player.volume_db = -11.0
 	parent.add_child(folk_music_player)
 
+	# Ambient cicadas player (hot afternoon heat chorus)
+	ambient_cicada_player = AudioStreamPlayer.new()
+	ambient_cicada_player.name = "Ambient_Cicadas"
+	ambient_cicada_player.stream = sound_cache["cicadas"]
+	ambient_cicada_player.volume_db = -60.0
+	parent.add_child(ambient_cicada_player)
+	ambient_cicada_player.play()
+
 
 static func toggle_folk_music() -> bool:
 	if folk_music_player:
@@ -114,7 +125,7 @@ static func play(sound_name: String, volume_db: float = -4.0, pitch_scale: float
 		p.play()
 
 
-static func update_ambience(is_night_factor: float) -> void:
+static func update_ambience(is_night_factor: float, time_of_day: float = 12.0) -> void:
 	# is_night_factor: 0.0 = full day, 1.0 = full night
 	if ambient_day_player:
 		var day_db = lerp(-10.0, -60.0, is_night_factor)
@@ -122,6 +133,11 @@ static func update_ambience(is_night_factor: float) -> void:
 	if ambient_night_player:
 		var night_db = lerp(-60.0, -8.0, is_night_factor)
 		ambient_night_player.volume_db = night_db
+	if ambient_cicada_player:
+		# Cicadas swell during hot midday hours (10:00 to 17:00)
+		var heat_factor = clampf(1.0 - absf(time_of_day - 13.5) / 3.8, 0.0, 1.0) * (1.0 - is_night_factor)
+		var cicada_db = lerp(-60.0, -11.0, heat_factor)
+		ambient_cicada_player.volume_db = cicada_db
 
 
 static func update_rain(rain_factor: float) -> void:
@@ -855,6 +871,75 @@ static func _synth_roneat_melody() -> AudioStreamWAV:
 	wav.loop_end = total_samples
 	wav.data = data
 	return wav
+
+
+static func _synth_cicadas() -> AudioStreamWAV:
+	# Rhythmic Cambodian afternoon cicada chorus (Chongreet)
+	var duration = 3.6
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+
+		# High frequency buzz (5300 Hz carrier + 8000 Hz shimmer)
+		var chirp = sin(2.0 * PI * 36.0 * t) * 0.4 + 0.6
+		var swell = 0.65 + 0.35 * sin(2.0 * PI * 0.42 * t)
+		var carrier1 = sin(2.0 * PI * 5250.0 * t)
+		var carrier2 = sin(2.0 * PI * 8100.0 * t) * 0.35
+		var white = randf_range(-0.15, 0.15)
+
+		var val = (carrier1 * 0.65 + carrier2 + white) * chirp * swell * 0.32
+		val = clampf(val, -1.0, 1.0)
+		var ival = clampi(int(val * 26000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	wav.loop_end = total_samples
+	wav.data = data
+	return wav
+
+
+static func _synth_water_stream() -> AudioStreamWAV:
+	# Gentle bubbling and lapping of canal & lotus pond water
+	var duration = 4.0
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	var last_val = 0.0
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var white = randf_range(-1.0, 1.0)
+		last_val = (last_val * 0.88) + (white * 0.12) # Pink/brownian water wash
+
+		# Periodic water bubbles & surface pops
+		var bubble = 0.0
+		var b_cycle = fmod(t * 2.8, 1.0)
+		if b_cycle < 0.15:
+			var b_env = sin(PI * (b_cycle / 0.15))
+			var b_freq = 320.0 + b_cycle * 1800.0 # Frequency rise on bubble pop
+			bubble = sin(2.0 * PI * b_freq * t) * b_env * 0.45
+
+		var val = (last_val * 0.65 + bubble * 0.35) * 0.45
+		val = clampf(val, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	wav.loop_end = total_samples
+	wav.data = data
+	return wav
+
 
 
 

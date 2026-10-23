@@ -46,6 +46,7 @@ func _ready() -> void:
 	_spawn_village_dog()
 	_spawn_monk_procession()
 	_spawn_roneat()
+	_setup_water_ambience()
 	
 	# 4. Enhance HUD with Time Display & Key Guides
 	_setup_hud()
@@ -335,5 +336,30 @@ func _spawn_roneat() -> void:
 	roneat.position = Vector3(-19.8, 0.65, 4.2)
 	roneat.rotation_degrees.y = 80.0
 	add_child(roneat)
+
+
+func _setup_water_ambience() -> void:
+	# Lotus Pond lapping water 3D audio
+	var pond_audio := AudioStreamPlayer3D.new()
+	pond_audio.name = "Audio_LotusPond"
+	pond_audio.stream = AudioSynth.sound_cache.get("water_stream")
+	pond_audio.position = Vector3(-24.5, 0.05, -17.5)
+	pond_audio.max_distance = 24.0
+	pond_audio.unit_size = 12.0
+	pond_audio.volume_db = -6.0
+	add_child(pond_audio)
+	pond_audio.play()
+
+	# Irrigation Canal water flow 3D audio
+	var canal_audio := AudioStreamPlayer3D.new()
+	canal_audio.name = "Audio_Canal"
+	canal_audio.stream = AudioSynth.sound_cache.get("water_stream")
+	canal_audio.position = Vector3(18.0, 0.05, 8.0)
+	canal_audio.max_distance = 22.0
+	canal_audio.unit_size = 10.0
+	canal_audio.volume_db = -7.0
+	add_child(canal_audio)
+	canal_audio.play()
+
 
 

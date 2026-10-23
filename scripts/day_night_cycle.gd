@@ -190,8 +190,8 @@ func _update_lighting(delta: float) -> void:
 	for firefly in firefly_particles:
 		firefly.emitting = is_night_factor > 0.4
 		
-	# Update Audio Ambience crossfade
-	AudioSynth.update_ambience(is_night_factor)
+	# Update Audio Ambience crossfade (crickets at night, cicadas during hot day)
+	AudioSynth.update_ambience(is_night_factor, time_of_day)
 	
 	emit_signal("time_changed", get_time_string(), is_night_factor > 0.5)
 
