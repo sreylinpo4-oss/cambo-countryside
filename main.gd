@@ -1,0 +1,197 @@
+extends Node3D
+
+const AudioSynth = preload("res://scripts/audio_synth.gd")
+const DayNightCycle = preload("res://scripts/day_night_cycle.gd")
+const CambodianCow = preload("res://scripts/cow.gd")
+const CambodianWaterBuffalo = preload("res://scripts/buffalo.gd")
+const VillageChicken = preload("res://scripts/chicken.gd")
+const CountrysideHammock = preload("res://scripts/hammock.gd")
+const CountrysideBicycle = preload("res://scripts/bicycle.gd")
+const HarvestableItem = preload("res://scripts/harvestable.gd")
+
+# Cambo Countryside - Main World Controller
+var day_night: DayNightCycle
+var time_label: Label
+var player_ref: Node
+
+func _ready() -> void:
+	# 1. Initialize Audio Synthesizer (SFX & Day/Night Ambiance)
+	AudioSynth.init_audio(self)
+	
+	# 2. Setup Dynamic Day / Night Cycle
+	_setup_day_night()
+	
+	# 3. Setup World Entities
+	_spawn_bicycle()
+	_spawn_hammock()
+	_spawn_cows()
+	_spawn_water_buffaloes()
+	_spawn_chickens()
+	_spawn_harvestables()
+	
+	# 4. Enhance HUD with Time Display & Key Guides
+	_setup_hud()
+
+
+func _setup_day_night() -> void:
+	day_night = DayNightCycle.new()
+	day_night.name = "DayNightController"
+	add_child(day_night)
+	
+	var dir_light = get_node_or_null("DirectionalLight3D") as DirectionalLight3D
+	var world_env = get_node_or_null("WorldEnvironment") as WorldEnvironment
+	
+	day_night.setup(dir_light, world_env)
+	day_night.time_changed.connect(_on_time_changed)
+
+
+func _on_time_changed(time_str: String, is_night: bool) -> void:
+	if time_label:
+		time_label.text = time_str
+
+
+func _setup_hud() -> void:
+	var hud = get_node_or_null("HUD")
+	if not hud:
+		return
+		
+	var margin = hud.get_node_or_null("Margin")
+	if not margin:
+		return
+		
+	var vbox = margin.get_node_or_null("VBox") as VBoxContainer
+	if not vbox:
+		return
+		
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	# Add Time & Ambiance Widget
+	time_label = Label.new()
+	time_label.name = "TimeDisplay"
+	time_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	time_label.add_theme_font_size_override("font_size", 16)
+	time_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.52))
+	time_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	time_label.add_theme_constant_override("shadow_offset_x", 1)
+	time_label.add_theme_constant_override("shadow_offset_y", 1)
+	time_label.text = day_night.get_time_string()
+	vbox.add_child(time_label)
+	
+	# Update Title Label mouse filter
+	var title = vbox.get_node_or_null("TitleLabel") as Label
+	if title:
+		title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	# Update Hint Label with full controls
+	var hint = vbox.get_node_or_null("HintLabel") as Label
+	if hint:
+		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hint.text = "Move: WASD/Arrows | Jump: Space | Sprint: Shift | Interact/Ride/Harvest: E | Bell: Space/F | Time: T | Costume: C | View: V | Release/Capture: Esc / Click"
+
+
+func _spawn_bicycle() -> void:
+	var bike = CountrysideBicycle.new()
+	bike.name = "CountrysideBicycle"
+	bike.position = Vector3(-8.5, 0.05, 4.2)
+	bike.rotation_degrees.y = 105.0
+	add_child(bike)
+
+
+func _spawn_hammock() -> void:
+	# Positioned under the shady stilt house between pillars
+	var hammock = CountrysideHammock.new()
+	hammock.name = "HouseHammock"
+	# Pillars are at X=-20, Y=0, Z=5; under the house krea resting platform
+	hammock.position = Vector3(-19.5, 0.1, 2.5)
+	hammock.rotation_degrees.y = 85.0
+	add_child(hammock)
+
+
+func _spawn_cows() -> void:
+	# White Zebu Cow 1 grazing in west pasture
+	var cow1 = CambodianCow.new()
+	cow1.name = "Cow_White"
+	cow1.position = Vector3(-14.0, 0.0, 18.0)
+	cow1.rotation_degrees.y = 35.0
+	add_child(cow1)
+	
+	# White Zebu Cow 2 grazing further north in meadow
+	var cow2 = CambodianCow.new()
+	cow2.name = "Cow_Cream"
+	cow2.position = Vector3(-18.0, 0.0, 32.0)
+	cow2.rotation_degrees.y = -60.0
+	add_child(cow2)
+
+
+func _spawn_water_buffaloes() -> void:
+	# Buffalo 1: East rice paddy
+	var buf1 = CambodianWaterBuffalo.new()
+	buf1.name = "WaterBuffalo_Paddy"
+	buf1.position = Vector3(22.0, 0.0, 8.0)
+	buf1.rotation_degrees.y = -80.0
+	add_child(buf1)
+	
+	# Buffalo 2: Near lotus pond
+	var buf2 = CambodianWaterBuffalo.new()
+	buf2.name = "WaterBuffalo_Pond"
+	buf2.position = Vector3(-20.0, 0.0, -14.0)
+	buf2.rotation_degrees.y = 120.0
+	add_child(buf2)
+
+
+func _spawn_chickens() -> void:
+	# Mother hen & chicks foraging under and around stilt house
+	var hen = VillageChicken.new()
+	hen.name = "MotherHen"
+	hen.position = Vector3(-15.5, 0.0, 6.5)
+	add_child(hen)
+
+
+func _spawn_harvestables() -> void:
+	# Coconuts under palm trees
+	var coconut_positions = [
+		Vector3(9.0, 0.22, 24.0),
+		Vector3(10.0, 0.22, 10.0),
+		Vector3(8.0, 0.22, -18.0),
+		Vector3(42.0, 0.22, -6.0)
+	]
+	for i in range(coconut_positions.size()):
+		var item = HarvestableItem.new()
+		item.name = "Coconut_" + str(i)
+		item.item_type = HarvestableItem.ItemType.COCONUT
+		item.position = coconut_positions[i]
+		add_child(item)
+		
+	# Bananas in banana plant grove
+	var banana_positions = [
+		Vector3(-13.0, 1.3, -2.0),
+		Vector3(-15.0, 1.3, -4.0),
+		Vector3(-26.0, 1.3, 11.0)
+	]
+	for i in range(banana_positions.size()):
+		var item = HarvestableItem.new()
+		item.name = "Banana_" + str(i)
+		item.item_type = HarvestableItem.ItemType.BANANA
+		item.position = banana_positions[i]
+		add_child(item)
+		
+	# Sacred lotus blossoms in pond
+	var lotus_positions = [
+		Vector3(-23.0, 0.04, -16.0),
+		Vector3(-26.0, 0.04, -18.0),
+		Vector3(-24.0, 0.04, -20.0),
+		Vector3(-27.0, 0.04, -15.0)
+	]
+	for i in range(lotus_positions.size()):
+		var item = HarvestableItem.new()
+		item.name = "Lotus_" + str(i)
+		item.item_type = HarvestableItem.ItemType.LOTUS
+		item.position = lotus_positions[i]
+		add_child(item)
+
+
+func make_material(color: Color) -> StandardMaterial3D:
+	var material = StandardMaterial3D.new()
+	material.albedo_color = color
+	return material

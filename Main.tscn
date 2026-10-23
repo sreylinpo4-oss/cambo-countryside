@@ -1,0 +1,499 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://main.gd" id="1_lgr22"]
+[ext_resource type="PackedScene" path="res://scenes/house.tscn" id="2_trn2v"]
+[ext_resource type="PackedScene" path="res://scenes/palm_tree.tscn" id="3_03owx"]
+[ext_resource type="PackedScene" path="res://scenes/shade_tree.tscn" id="4_wkp8b"]
+[ext_resource type="PackedScene" path="res://scenes/banana_plant.tscn" id="5_20pc6"]
+[ext_resource type="PackedScene" path="res://scenes/fence.tscn" id="6_5vvyt"]
+[ext_resource type="PackedScene" path="res://player.tscn" id="7_c6i3y"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_c2ibq"]
+sky_top_color = Color(0.25, 0.52, 0.88, 1)
+sky_horizon_color = Color(0.74, 0.82, 0.88, 1)
+ground_bottom_color = Color(0.22, 0.35, 0.18, 1)
+ground_horizon_color = Color(0.58, 0.68, 0.48, 1)
+sun_angle_max = 35.0
+
+[sub_resource type="Sky" id="Sky_j4qnp"]
+sky_material = SubResource("ProceduralSkyMaterial_c2ibq")
+
+[sub_resource type="Environment" id="Environment_fpfj3"]
+background_mode = 2
+sky = SubResource("Sky_j4qnp")
+ambient_light_source = 3
+ambient_light_sky_contribution = 0.55
+ambient_light_energy = 1.05
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.25
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sc1dx"]
+size = Vector3(160, 2, 160)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kjvhd"]
+albedo_color = Color(0.28, 0.52, 0.2, 1)
+roughness = 0.88
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_5tuhn"]
+size = Vector2(160, 160)
+subdivide_width = 8
+subdivide_depth = 8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2gh4u"]
+albedo_color = Color(0.68, 0.36, 0.22, 1)
+roughness = 0.94
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_devvj"]
+size = Vector2(7.5, 120)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_3b0ty"]
+size = Vector2(5.5, 22)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bg4s2"]
+albedo_color = Color(0.32, 0.62, 0.16, 1)
+roughness = 0.35
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_hhcpw"]
+size = Vector2(34, 28)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mxvw5"]
+albedo_color = Color(0.38, 0.44, 0.2, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="BoxMesh_xrxkg"]
+size = Vector3(35.2, 0.22, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sqvbp"]
+size = Vector3(35.2, 0.22, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hri7i"]
+size = Vector3(1.2, 0.22, 28)
+
+[sub_resource type="BoxMesh" id="BoxMesh_w3rk5"]
+size = Vector3(1.2, 0.22, 28)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_5mvff"]
+size = Vector2(32, 26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_oye8v"]
+size = Vector3(33.2, 0.22, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_40n85"]
+size = Vector3(33.2, 0.22, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gb15f"]
+size = Vector3(1.2, 0.22, 26)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sph85"]
+size = Vector3(1.2, 0.22, 26)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o7g6l"]
+transparency = 1
+albedo_color = Color(0.18, 0.48, 0.56, 0.82)
+metallic = 0.1
+roughness = 0.05
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_vi5kq"]
+size = Vector2(16, 12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x8wvn"]
+albedo_color = Color(0.52, 0.5, 0.48, 1)
+roughness = 0.88
+
+[sub_resource type="SphereMesh" id="SphereMesh_5mkgo"]
+radius = 0.45
+height = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_3ccbu"]
+radius = 0.45
+height = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_ny7u2"]
+radius = 0.45
+height = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_x3yn0"]
+radius = 0.45
+height = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_1w2xm"]
+radius = 0.45
+height = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_gngx1"]
+radius = 0.45
+height = 0.9
+
+[sub_resource type="GDScript" id="GDScript_sh265"]
+resource_name = "player.gd"
+script/source = "
+extends CharacterBody3D
+
+@export var move_speed: float = 5.0
+@export var mouse_sensitivity: float = 0.002
+
+var gravity: float = 9.8
+var camera_pitch: float = -0.15
+var camera: Camera3D
+
+
+func _ready() -> void:
+	# Make a simple human-like character
+	make_part(\"Body\", Vector3(0, 1.1, 0),
+		Vector3(0.65, 0.85, 0.35),
+		Color(0.25, 0.55, 0.35))
+
+	make_part(\"Head\", Vector3(0, 1.85, 0),
+		Vector3(0.42, 0.42, 0.42),
+		Color(0.85, 0.65, 0.48))
+
+	make_part(\"Left Arm\", Vector3(-0.48, 1.12, 0),
+		Vector3(0.2, 0.7, 0.22),
+		Color(0.85, 0.65, 0.48))
+
+	make_part(\"Right Arm\", Vector3(0.48, 1.12, 0),
+		Vector3(0.2, 0.7, 0.22),
+		Color(0.85, 0.65, 0.48))
+
+	make_part(\"Left Leg\", Vector3(-0.18, 0.42, 0),
+		Vector3(0.23, 0.75, 0.27),
+		Color(0.18, 0.2, 0.3))
+
+	make_part(\"Right Leg\", Vector3(0.18, 0.42, 0),
+		Vector3(0.23, 0.75, 0.27),
+		Color(0.18, 0.2, 0.3))
+
+	# Solid player collision
+	var collision := CollisionShape3D.new()
+	var shape := CapsuleShape3D.new()
+	shape.radius = 0.35
+	shape.height = 1.9
+	collision.shape = shape
+	collision.position.y = 0.95
+	add_child(collision)
+
+	# Camera behind and above the player
+	var pivot := Node3D.new()
+	pivot.name = \"CameraPivot\"
+	pivot.position = Vector3(0, 1.5, 0)
+	add_child(pivot)
+
+	camera = Camera3D.new()
+	camera.position = Vector3(0, 1.0, 5.0)
+	camera.rotation_degrees.x = -12
+	pivot.add_child(camera)
+	camera.current = true
+
+
+func make_part(part_name: String, part_position: Vector3,
+	part_size: Vector3, part_color: Color) -> void:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+
+	var mesh := BoxMesh.new()
+	mesh.size = part_size
+	part.mesh = mesh
+	part.position = part_position
+
+	var material := StandardMaterial3D.new()
+	material.albedo_color = part_color
+	part.material_override = material
+
+	add_child(part)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+	if event.is_action_pressed(\"ui_cancel\"):
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+	if event is InputEventMouseMotion:
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			rotate_y(-event.relative.x * mouse_sensitivity)
+
+
+func _physics_process(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+	else:
+		if velocity.y < 0:
+			velocity.y = 0
+
+	var input_dir := Input.get_vector(
+		\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\"
+	)
+
+	var direction := (
+		transform.basis * Vector3(input_dir.x, 0, input_dir.y)
+	).normalized()
+
+	if direction.length() > 0:
+		velocity.x = direction.x * move_speed
+		velocity.z = direction.z * move_speed
+	else:
+		velocity.x = move_toward(velocity.x, 0, move_speed)
+		velocity.z = move_toward(velocity.z, 0, move_speed)
+
+	move_and_slide()
+"
+
+[node name="World" type="Node3D" unique_id=536392648]
+script = ExtResource("1_lgr22")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1392417060]
+environment = SubResource("Environment_fpfj3")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=338040803]
+transform = Transform3D(0.7431448, -0.4731468, 0.4731468, 0, 0.70710677, 0.70710677, -0.6691306, -0.5254827, 0.5254827, 0, 0, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.35
+shadow_enabled = true
+shadow_bias = 0.04
+shadow_normal_bias = 1.5
+shadow_blur = 1.5
+
+[node name="GroundFloor" type="StaticBody3D" parent="." unique_id=688790845]
+
+[node name="@CollisionShape3D@26" type="CollisionShape3D" parent="GroundFloor" unique_id=1901668794]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+shape = SubResource("BoxShape3D_sc1dx")
+
+[node name="GrassMeadow" type="MeshInstance3D" parent="GroundFloor" unique_id=593015341]
+material_override = SubResource("StandardMaterial3D_kjvhd")
+mesh = SubResource("PlaneMesh_5tuhn")
+
+[node name="DirtRoadMain" type="MeshInstance3D" parent="." unique_id=1334077603]
+transform = Transform3D(0.99026805, 0, 0.1391731, 0, 1, 0, -0.1391731, 0, 0.99026805, 0, 0.03, 0)
+material_override = SubResource("StandardMaterial3D_2gh4u")
+mesh = SubResource("PlaneMesh_devvj")
+
+[node name="PathToHouse" type="MeshInstance3D" parent="." unique_id=714614019]
+transform = Transform3D(0.20791166, 0, 0.9781476, 0, 1, 0, -0.9781476, 0, 0.20791166, -12, 0.04, 6)
+material_override = SubResource("StandardMaterial3D_2gh4u")
+mesh = SubResource("PlaneMesh_3b0ty")
+
+[node name="PaddyEast" type="MeshInstance3D" parent="." unique_id=464447007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.02, 10)
+material_override = SubResource("StandardMaterial3D_bg4s2")
+mesh = SubResource("PlaneMesh_hhcpw")
+
+[node name="PaddyEast_DykeN" type="MeshInstance3D" parent="." unique_id=1276845227]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.11, -4)
+material_override = SubResource("StandardMaterial3D_mxvw5")
+mesh = SubResource("BoxMesh_xrxkg")
+
+[node name="PaddyEast_DykeS" type="MeshInstance3D" parent="." unique_id=976867483]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.11, 24)
+material_override = SubResource("StandardMaterial3D_mxvw5")
+mesh = SubResource("BoxMesh_sqvbp")
+
+[node name="PaddyEast_DykeW" type="MeshInstance3D" parent="." unique_id=73495325]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0.11, 10)
+material_override = SubResource("StandardMaterial3D_mxvw5")
+mesh = SubResource("BoxMesh_hri7i")
+
+[node name="PaddyEast_DykeE" type="MeshInstance3D" parent="." unique_id=1362407228]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43, 0.11, 10)
+material_override = SubResource("StandardMaterial3D_mxvw5")
+mesh = SubResource("BoxMesh_w3rk5")
+
+[node name="PaddySouth" type="MeshInstance3D" parent="." unique_id=956886486]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.02, -26)
+material_override = SubResource("StandardMaterial3D_bg4s2")
+mesh = SubResource("PlaneMesh_5mvff")
+
+[node name="PaddySouth_DykeN" type="MeshInstance3D" parent="." unique_id=1729180158]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.11, -39)
+material_override = SubResource("StandardMaterial3D_mxvw5")
+mesh = SubResource("BoxMesh_oye8v")
+
+[node name="PaddySouth_DykeS" type="MeshInstance3D" parent="." unique_id=1734657300]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.11, -13)
+material_override = SubResource("StandardMaterial3D_mxvw5")
+mesh = SubResource("BoxMesh_40n85")
+
+[node name="PaddySouth_DykeW" type="MeshInstance3D" parent="." unique_id=1785498662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.11, -26)
+material_override = SubResource("StandardMaterial3D_mxvw5")
+mesh = SubResource("BoxMesh_gb15f")
+
+[node name="PaddySouth_DykeE" type="MeshInstance3D" parent="." unique_id=1661625477]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0.11, -26)
+material_override = SubResource("StandardMaterial3D_mxvw5")
+mesh = SubResource("BoxMesh_sph85")
+
+[node name="LotusPond" type="MeshInstance3D" parent="." unique_id=34362978]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0.02, -18)
+material_override = SubResource("StandardMaterial3D_o7g6l")
+mesh = SubResource("PlaneMesh_vi5kq")
+
+[node name="PondStone0" type="MeshInstance3D" parent="." unique_id=1749922775]
+transform = Transform3D(1.4, 0, 0, 0, 0.6, 0, 0, 0, 1.2, -33, 0.2, -18)
+material_override = SubResource("StandardMaterial3D_x8wvn")
+mesh = SubResource("SphereMesh_5mkgo")
+
+[node name="PondStone1" type="MeshInstance3D" parent="." unique_id=1960470753]
+transform = Transform3D(1.4, 0, 0, 0, 0.6, 0, 0, 0, 1.2, -17, 0.25, -18)
+material_override = SubResource("StandardMaterial3D_x8wvn")
+mesh = SubResource("SphereMesh_3ccbu")
+
+[node name="PondStone2" type="MeshInstance3D" parent="." unique_id=1236239811]
+transform = Transform3D(1.4, 0, 0, 0, 0.6, 0, 0, 0, 1.2, -25, 0.2, -24)
+material_override = SubResource("StandardMaterial3D_x8wvn")
+mesh = SubResource("SphereMesh_ny7u2")
+
+[node name="PondStone3" type="MeshInstance3D" parent="." unique_id=484405926]
+transform = Transform3D(1.4, 0, 0, 0, 0.6, 0, 0, 0, 1.2, -25, 0.2, -12)
+material_override = SubResource("StandardMaterial3D_x8wvn")
+mesh = SubResource("SphereMesh_x3yn0")
+
+[node name="PondStone4" type="MeshInstance3D" parent="." unique_id=406348450]
+transform = Transform3D(1.4, 0, 0, 0, 0.6, 0, 0, 0, 1.2, -31, 0.22, -14)
+material_override = SubResource("StandardMaterial3D_x8wvn")
+mesh = SubResource("SphereMesh_1w2xm")
+
+[node name="PondStone5" type="MeshInstance3D" parent="." unique_id=208137156]
+transform = Transform3D(1.4, 0, 0, 0, 0.6, 0, 0, 0, 1.2, -19, 0.24, -22)
+material_override = SubResource("StandardMaterial3D_x8wvn")
+mesh = SubResource("SphereMesh_gngx1")
+
+[node name="MainStiltHouse" type="StaticBody3D" parent="." unique_id=385951690 instance=ExtResource("2_trn2v")]
+transform = Transform3D(0.087155804, 0, 0.9961947, 0, 1, 0, -0.9961947, 0, 0.087155804, -20, 0, 5)
+
+[node name="RiceGranary" type="StaticBody3D" parent="." unique_id=435510217 instance=ExtResource("2_trn2v")]
+transform = Transform3D(-0.23257369, 0, 0.638991, 0, 0.68, 0, -0.638991, 0, -0.23257369, -24, 0, -6)
+
+[node name="PalmTree_0" type="StaticBody3D" parent="." unique_id=860464570 instance=ExtResource("3_03owx")]
+transform = Transform3D(0.85, 0, 0, 0, 0.8075, 0, 0, 0, 0.85, 9, 0, 24)
+
+[node name="PalmTree_1" type="StaticBody3D" parent="." unique_id=986613297 instance=ExtResource("3_03owx")]
+transform = Transform3D(0.6342585, 0, 0.680159, 0, 0.9765, 0, -0.680159, 0, 0.6342585, 10, 0, 10)
+
+[node name="PalmTree_2" type="StaticBody3D" parent="." unique_id=1556162927 instance=ExtResource("3_03owx")]
+transform = Transform3D(-0.07045404, 0, 1.0075397, 0, 1.1615, 0, -1.0075397, 0, -0.07045404, 11, 0, -4)
+
+[node name="PalmTree_3" type="StaticBody3D" parent="." unique_id=1398169715 instance=ExtResource("3_03owx")]
+transform = Transform3D(-0.847089, 0, 0.68595934, 0, 1.0355, 0, -0.68595934, 0, -0.847089, 8, 0, -18)
+
+[node name="PalmTree_4" type="StaticBody3D" parent="." unique_id=1900292913 instance=ExtResource("3_03owx")]
+transform = Transform3D(-1.1586136, 0, -0.16283253, 0, 1.2285, 0, 0.16283253, 0, -1.1586136, 9, 0, -38)
+
+[node name="PalmTree_5" type="StaticBody3D" parent="." unique_id=547130477 instance=ExtResource("3_03owx")]
+transform = Transform3D(-0.4875399, 0, -0.69627935, 0, 0.9775, 0, 0.69627935, 0, -0.4875399, 43, 0, 24)
+
+[node name="PalmTree_6" type="StaticBody3D" parent="." unique_id=731471746 instance=ExtResource("3_03owx")]
+transform = Transform3D(0.19335768, 0, -0.9096773, 0, 0.8835, 0, 0.9096773, 0, 0.19335768, 42, 0, -6)
+
+[node name="PalmTree_7" type="StaticBody3D" parent="." unique_id=558059951 instance=ExtResource("3_03owx")]
+transform = Transform3D(0.8657389, 0, -0.5201885, 0, 1.0605, 0, 0.5201885, 0, 0.8657389, 41, 0, -38)
+
+[node name="PalmTree_8" type="StaticBody3D" parent="." unique_id=563170155 instance=ExtResource("3_03owx")]
+transform = Transform3D(1.0477753, 0, 0.30044472, 0, 1.2535, 0, -0.30044472, 0, 1.0477753, -6, 0, 36)
+
+[node name="PalmTree_9" type="StaticBody3D" parent="." unique_id=872622357 instance=ExtResource("3_03owx")]
+transform = Transform3D(0.5311689, 0, 1.0424776, 0, 1.1115, 0, -1.0424776, 0, 0.5311689, -35, 0, 18)
+
+[node name="PalmTree_10" type="StaticBody3D" parent="." unique_id=1416002437 instance=ExtResource("3_03owx")]
+transform = Transform3D(-0.29071712, 0, 0.7987387, 0, 0.8925, 0, -0.7987387, 0, -0.29071712, -36, 0, -28)
+
+[node name="PalmTree_11" type="StaticBody3D" parent="." unique_id=2028359975 instance=ExtResource("3_03owx")]
+transform = Transform3D(-0.8560695, 0, 0.36337999, 0, 1.0695, 0, -0.36337999, 0, -0.8560695, 26, 0, 25)
+
+[node name="PalmTree_12" type="StaticBody3D" parent="." unique_id=1372796455 instance=ExtResource("3_03owx")]
+transform = Transform3D(-0.9226809, 0, -0.41080388, 0, 0.9595, 0, 0.41080388, 0, -0.9226809, 25, 0, -5)
+
+[node name="ShadeTree_0" type="StaticBody3D" parent="." unique_id=424292763 instance=ExtResource("4_wkp8b")]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, -28, 0, 16)
+
+[node name="ShadeTree_1" type="StaticBody3D" parent="." unique_id=2085631744 instance=ExtResource("4_wkp8b")]
+transform = Transform3D(0.4310706, 0, 0.92443395, 0, 1.02, 0, -0.92443395, 0, 0.4310706, -14, 0, 22)
+
+[node name="ShadeTree_2" type="StaticBody3D" parent="." unique_id=1297853379 instance=ExtResource("4_wkp8b")]
+transform = Transform3D(-0.7327779, 0, 0.87329066, 0, 1.14, 0, -0.87329066, 0, -0.7327779, -32, 0, -4)
+
+[node name="ShadeTree_3" type="StaticBody3D" parent="." unique_id=2044236970 instance=ExtResource("4_wkp8b")]
+transform = Transform3D(-1.2170665, 0, -0.32611203, 0, 1.26, 0, 0.32611203, 0, -1.2170665, -12, 0, -25)
+
+[node name="ShadeTree_4" type="StaticBody3D" parent="." unique_id=906737024 instance=ExtResource("4_wkp8b")]
+transform = Transform3D(-0.15628332, 0, -0.88632697, 0, 0.9, 0, 0.88632697, 0, -0.15628332, 4, 0, -42)
+
+[node name="ShadeTree_5" type="StaticBody3D" parent="." unique_id=431536293 instance=ExtResource("4_wkp8b")]
+transform = Transform3D(0.835535, 0, -0.5850481, 0, 1.02, 0, 0.5850481, 0, 0.835535, -15, 0, 48)
+
+[node name="Banana_0" type="Node3D" parent="." unique_id=7274830 instance=ExtResource("5_20pc6")]
+transform = Transform3D(0.85, 0, 0, 0, 0.85, 0, 0, 0, 0.85, -13, 0, -2)
+
+[node name="Banana_1" type="Node3D" parent="." unique_id=1071304347 instance=ExtResource("5_20pc6")]
+transform = Transform3D(0.60181504, 0, 0.79863554, 0, 1, 0, -0.79863554, 0, 0.60181504, -15, 0, -4)
+
+[node name="Banana_2" type="Node3D" parent="." unique_id=396668255 instance=ExtResource("5_20pc6")]
+transform = Transform3D(-0.31698295, 0, 1.1054509, 0, 1.15, 0, -1.1054509, 0, -0.31698295, -14, 0, -5.5)
+
+[node name="Banana_3" type="Node3D" parent="." unique_id=1896429249 instance=ExtResource("5_20pc6")]
+transform = Transform3D(-0.7935434, 0, 0.30461273, 0, 0.85, 0, -0.30461273, 0, -0.7935434, -26, 0, 11)
+
+[node name="Banana_4" type="Node3D" parent="." unique_id=1124138108 instance=ExtResource("5_20pc6")]
+transform = Transform3D(-0.8480481, 0, -0.52991927, 0, 1, 0, 0.52991927, 0, -0.8480481, -28, 0, 12)
+
+[node name="Banana_5" type="Node3D" parent="." unique_id=636479565 instance=ExtResource("5_20pc6")]
+transform = Transform3D(-0.10022907, 0, -1.1456239, 0, 1.15, 0, 1.1456239, 0, -0.10022907, -29, 0, -12)
+
+[node name="Banana_6" type="Node3D" parent="." unique_id=1035374108 instance=ExtResource("5_20pc6")]
+transform = Transform3D(0.63167316, 0, -0.568761, 0, 0.85, 0, 0.568761, 0, 0.63167316, -21, 0, -22)
+
+[node name="Fence_0" type="StaticBody3D" parent="." unique_id=1155455759 instance=ExtResource("6_5vvyt")]
+transform = Transform3D(0.99026805, 0, 0.1391731, 0, 1, 0, -0.1391731, 0, 0.99026805, -7.5, 0, -2)
+
+[node name="Fence_1" type="StaticBody3D" parent="." unique_id=84496122 instance=ExtResource("6_5vvyt")]
+transform = Transform3D(0.99026805, 0, 0.1391731, 0, 1, 0, -0.1391731, 0, 0.99026805, -7.5, 0, 1)
+
+[node name="Fence_2" type="StaticBody3D" parent="." unique_id=249722900 instance=ExtResource("6_5vvyt")]
+transform = Transform3D(0.99026805, 0, 0.1391731, 0, 1, 0, -0.1391731, 0, 0.99026805, -7.5, 0, 4)
+
+[node name="Fence_3" type="StaticBody3D" parent="." unique_id=1869797069 instance=ExtResource("6_5vvyt")]
+transform = Transform3D(0.99026805, 0, 0.1391731, 0, 1, 0, -0.1391731, 0, 0.99026805, -7.5, 0, 10)
+
+[node name="Fence_4" type="StaticBody3D" parent="." unique_id=1627727906 instance=ExtResource("6_5vvyt")]
+transform = Transform3D(0.99026805, 0, 0.1391731, 0, 1, 0, -0.1391731, 0, 0.99026805, -7.5, 0, 13)
+
+[node name="player" type="CharacterBody3D" parent="." unique_id=1027635987 instance=ExtResource("7_c6i3y")]
+transform = Transform3D(0.087155804, 0, 0.9961947, 0, 1, 0, -0.9961947, 0, 0.087155804, 0, 1.0, 7)
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1388573085]
+
+[node name="Margin" type="MarginContainer" parent="HUD" unique_id=799837399]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="VBox" type="VBoxContainer" parent="HUD/Margin" unique_id=1355992575]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="HUD/Margin/VBox" unique_id=386506366]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 0.95, 0.75, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.75)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "🇰🇭 CAMBO COUNTRYSIDE"
+
+[node name="HintLabel" type="Label" parent="HUD/Margin/VBox" unique_id=385271051]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.92, 0.95, 0.92, 0.9)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.75)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+text = "Move: WASD / Arrows | Jump: Space | Sprint: Shift | Customize: C | View: V | Release Mouse: Esc"
