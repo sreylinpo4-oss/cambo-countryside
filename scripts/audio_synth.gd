@@ -7,6 +7,7 @@ static var sfx_players: Array[AudioStreamPlayer] = []
 static var ambient_day_player: AudioStreamPlayer
 static var ambient_night_player: AudioStreamPlayer
 static var ambient_rain_player: AudioStreamPlayer
+static var folk_music_player: AudioStreamPlayer
 
 const MIX_RATE: int = 22050
 
@@ -35,6 +36,10 @@ static func init_audio(parent: Node) -> void:
 	sound_cache["blessing"] = _synth_blessing()
 	sound_cache["mud"] = _synth_mud_plow()
 	sound_cache["shutter"] = _synth_camera_shutter()
+	sound_cache["roneat_high"] = _synth_roneat_note(587.33, 0.7)
+	sound_cache["roneat_mid"] = _synth_roneat_note(392.0, 0.8)
+	sound_cache["roneat_low"] = _synth_roneat_note(293.66, 0.9)
+	sound_cache["folk_melody"] = _synth_roneat_melody()
 	
 	# Create pool of AudioStreamPlayers
 	for i in range(8):
@@ -66,6 +71,28 @@ static func init_audio(parent: Node) -> void:
 	ambient_rain_player.volume_db = -80.0
 	parent.add_child(ambient_rain_player)
 	ambient_rain_player.play()
+
+	# Folk music player (Roneat & Chapei traditional melodies)
+	folk_music_player = AudioStreamPlayer.new()
+	folk_music_player.name = "FolkMusicPlayer"
+	folk_music_player.stream = sound_cache["folk_melody"]
+	folk_music_player.volume_db = -11.0
+	parent.add_child(folk_music_player)
+
+
+static func toggle_folk_music() -> bool:
+	if folk_music_player:
+		if folk_music_player.playing:
+			folk_music_player.stop()
+			return false
+		else:
+			folk_music_player.play()
+			return true
+	return false
+
+
+static func is_folk_music_playing() -> bool:
+	return folk_music_player != null and folk_music_player.playing
 
 
 static func play(sound_name: String, volume_db: float = -4.0, pitch_scale: float = 1.0) -> void:
@@ -712,6 +739,123 @@ static func _synth_camera_shutter() -> AudioStreamWAV:
 	var wav = _build_wav(total_samples)
 	wav.data = data
 	return wav
+
+
+static func _synth_roneat_note(freq: float, duration: float) -> AudioStreamWAV:
+	# Authentic Cambodian Roneat Ek bamboo bar with padded mallet strike
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var env = exp(-t * 5.0)
+
+		# Woody mallet strike click transient
+		var click = 0.0
+		if t < 0.025:
+			var c_env = exp(-t * 160.0)
+			click = sin(2.0 * PI * 1750.0 * t) * c_env * 0.45
+
+		# Xylophone acoustic partials (f, 2.76f, 5.4f)
+		var t1 = sin(2.0 * PI * freq * t)
+		var t2 = sin(2.0 * PI * freq * 2.756 * t) * 0.32 * exp(-t * 7.5)
+		var t3 = sin(2.0 * PI * freq * 5.404 * t) * 0.12 * exp(-t * 11.0)
+
+		var val = (t1 * 0.65 + t2 + t3 + click) * env * 0.6
+		val = clampf(val, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
+
+static func _synth_roneat_melody() -> AudioStreamWAV:
+	# 12.5-second traditional Cambodian countryside Mohaori pentatonic melody
+	var duration = 12.5
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	# Traditional melody score: [start_time, freq, duration, is_accent]
+	var notes = [
+		[0.00, 293.66, 0.70, true],   # D4
+		[0.75, 392.00, 0.70, false],  # G4
+		[1.50, 440.00, 0.35, false],  # A4
+		[1.88, 493.88, 0.35, false],  # B4
+		[2.25, 587.33, 0.75, true],   # D5
+		[3.00, 493.88, 0.35, false],  # B4
+		[3.38, 440.00, 0.35, false],  # A4
+		[3.75, 392.00, 1.10, true],   # G4
+
+		[5.00, 329.63, 0.70, true],   # E4
+		[5.75, 392.00, 0.70, false],  # G4
+		[6.50, 440.00, 0.70, false],  # A4
+		[7.25, 587.33, 0.35, false],  # D5
+		[7.63, 659.25, 0.35, true],   # E5
+		[8.00, 587.33, 0.75, true],   # D5
+		[8.75, 493.88, 0.35, false],  # B4
+		[9.13, 440.00, 0.35, false],  # A4
+		[9.50, 392.00, 1.10, true],   # G4
+
+		[10.80, 440.00, 0.50, false], # A4
+		[11.35, 293.66, 1.05, true]   # D4
+	]
+
+	# Bass plucked Chapei strikes
+	var bass_plucks = [
+		[0.00, 146.83, 1.2], # Low D3
+		[3.75, 196.00, 1.1], # Low G3
+		[5.00, 164.81, 1.1], # Low E3
+		[8.00, 146.83, 1.2], # Low D3
+		[9.50, 196.00, 1.1], # Low G3
+		[11.35, 146.83, 1.1] # Low D3
+	]
+
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var mix = 0.0
+
+		# 1. Roneat notes
+		for note in notes:
+			var n_start: float = note[0]
+			var n_freq: float = note[1]
+			var n_dur: float = note[2]
+			if t >= n_start and t < (n_start + n_dur + 0.3):
+				var dt = t - n_start
+				var env = exp(-dt * 4.4)
+				var t1 = sin(2.0 * PI * n_freq * dt)
+				var t2 = sin(2.0 * PI * n_freq * 2.756 * dt) * 0.28 * exp(-dt * 6.5)
+				mix += (t1 * 0.55 + t2) * env * 0.42
+
+		# 2. Warm Chapei plucked bass
+		for b in bass_plucks:
+			var b_start: float = b[0]
+			var b_freq: float = b[1]
+			var b_dur: float = b[2]
+			if t >= b_start and t < (b_start + b_dur + 0.4):
+				var dt = t - b_start
+				var b_env = exp(-dt * 3.2)
+				var b_tone = sin(2.0 * PI * b_freq * dt) * 0.5 + sin(2.0 * PI * b_freq * 2.0 * dt) * 0.25
+				mix += b_tone * b_env * 0.32
+
+		mix = clampf(mix, -1.0, 1.0)
+		var ival = clampi(int(mix * 27000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	wav.loop_end = total_samples
+	wav.data = data
+	return wav
+
 
 
 

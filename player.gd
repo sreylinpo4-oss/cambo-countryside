@@ -716,6 +716,29 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_P:
 			toggle_photo_mode()
 			return
+		elif event.keycode == KEY_M:
+			var is_on = AudioSynth.toggle_folk_music()
+			var msg = "Folk Music: Playing (ភ្លេងប្រពៃណីខ្មែរ)" if is_on else "Folk Music: Paused"
+			if custom_ui:
+				var banner = Label.new()
+				banner.text = msg
+				banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				banner.add_theme_font_size_override("font_size", 16)
+				banner.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6))
+				banner.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+				banner.add_theme_constant_override("shadow_offset_x", 1)
+				banner.add_theme_constant_override("shadow_offset_y", 1)
+				banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+				banner.anchor_left = 0.3
+				banner.anchor_right = 0.7
+				banner.anchor_top = 0.12
+				custom_ui.add_child(banner)
+				var tw = custom_ui.create_tween()
+				tw.tween_interval(2.2)
+				tw.tween_property(banner, "modulate:a", 0.0, 0.8)
+				tw.tween_callback(banner.queue_free)
+			return
 		elif event.keycode == KEY_E:
 			# Interact or Dismount
 			if current_vehicle != null:

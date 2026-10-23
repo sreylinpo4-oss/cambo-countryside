@@ -16,6 +16,7 @@ const CountrysideCookingStation = preload("res://scripts/cooking_station.gd")
 const CountrysideFishingSpot = preload("res://scripts/fishing_spot.gd")
 const VillageDog = preload("res://scripts/village_dog.gd")
 const CountrysideMonkProcession = preload("res://scripts/monk_procession.gd")
+const CountrysideRoneatEk = preload("res://scripts/roneat_instrument.gd")
 
 # Cambo Countryside - Main World Controller
 var day_night: DayNightCycle
@@ -44,6 +45,7 @@ func _ready() -> void:
 	_spawn_fishing_spots()
 	_spawn_village_dog()
 	_spawn_monk_procession()
+	_spawn_roneat()
 	
 	# 4. Enhance HUD with Time Display & Key Guides
 	_setup_hud()
@@ -113,7 +115,7 @@ func _setup_hud() -> void:
 	var hint = vbox.get_node_or_null("HintLabel") as Label
 	if hint:
 		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hint.text = "Move: WASD | Jump: Space | Sprint: Shift | Interact/Ride/Fish: E | Plow/Bell: F | Time: T | Weather: R | Photo Mode: P | Costume: C | View: V"
+		hint.text = "Move: WASD | Jump: Space | Sprint: Shift | Interact/Ride/Play: E | Plow/Bell: F | Time: T | Weather: R | Music: M | Photo: P | Costume: C | View: V"
 
 
 func _spawn_bicycle() -> void:
@@ -324,5 +326,14 @@ func _spawn_monk_procession() -> void:
 	var monks = CountrysideMonkProcession.new()
 	monks.name = "MonkProcession"
 	add_child(monks)
+
+
+func _spawn_roneat() -> void:
+	# Traditional Cambodian Roneat Ek bamboo xylophone on resting platform under stilt house
+	var roneat = CountrysideRoneatEk.new()
+	roneat.name = "VillageRoneatEk"
+	roneat.position = Vector3(-19.8, 0.65, 4.2)
+	roneat.rotation_degrees.y = 80.0
+	add_child(roneat)
 
 
