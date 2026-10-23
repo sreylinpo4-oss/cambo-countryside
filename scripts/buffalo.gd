@@ -30,6 +30,10 @@ var walk_time: float = 0.0
 var ear_swish: float = 0.0
 var rider: Node = null
 
+var plow_pivot: Node3D = null
+var is_plowing: bool = false
+var plow_mud_timer: float = 0.0
+
 # Interaction
 var is_interactable: bool = true
 var interact_prompt: String = "Ride Buffalo (ជិះក្របី)"
@@ -55,7 +59,7 @@ func interact(player: Node) -> void:
 		# Mount the buffalo!
 		rider = player
 		current_state = State.RIDDEN
-		interact_prompt = "Dismount Buffalo (ចុះពីលើក្របី)"
+		interact_prompt = "Dismount [E] | Toggle Rice Plow [F] (ភ្ជួរស្រែ)"
 		if player.has_method("mount_buffalo"):
 			player.mount_buffalo(self, rider_seat)
 		AudioSynth.play("moo", -2.0, 0.82)
@@ -65,6 +69,8 @@ func interact(player: Node) -> void:
 
 
 func dismount() -> void:
+	if is_plowing:
+		toggle_plow()
 	if rider and rider.has_method("dismount_vehicle"):
 		rider.dismount_vehicle()
 	rider = null
@@ -112,6 +118,13 @@ func _handle_ridden(delta: float) -> void:
 		leg_bl.rotation_degrees.x = -sin(walk_time) * 22.0
 		leg_br.rotation_degrees.x = sin(walk_time) * 22.0
 		neck_pivot.rotation_degrees.x = sin(walk_time * 2.0) * 5.0
+
+		# Squelch mud if plowing
+		if is_plowing:
+			plow_mud_timer += delta
+			if plow_mud_timer >= 0.42:
+				plow_mud_timer = 0.0
+				AudioSynth.play("mud", -1.0, randf_range(0.92, 1.15))
 	else:
 		velocity.x = move_toward(velocity.x, 0, delta * 4.0)
 		velocity.z = move_toward(velocity.z, 0, delta * 4.0)
@@ -121,6 +134,41 @@ func _handle_ridden(delta: float) -> void:
 		leg_br.rotation_degrees.x = lerp(leg_br.rotation_degrees.x, 0.0, delta * 5.0)
 		
 	move_and_slide()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if current_state == State.RIDDEN and rider != null:
+		if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F:
+			toggle_plow()
+
+
+func toggle_plow() -> void:
+	is_plowing = not is_plowing
+	if plow_pivot:
+		var tw = create_tween()
+		if is_plowing:
+			AudioSynth.play("mud", 2.0)
+			tw.tween_property(plow_pivot, "rotation_degrees:x", 16.0, 0.3)
+			ridden_speed = 2.2 # Heavy pulling in flooded paddy
+			_show_toast("Lowered Rice Plow! Plowing the field (ភ្ជួរស្រែ)")
+		else:
+			tw.tween_property(plow_pivot, "rotation_degrees:x", -15.0, 0.3)
+			ridden_speed = 3.2
+			_show_toast("Raised Rice Plow")
+
+
+func _show_toast(msg: String) -> void:
+	var label = Label3D.new()
+	label.text = msg
+	label.font_size = 28
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.position = global_position + Vector3(0, 2.2, 0)
+	get_parent().add_child(label)
+
+	var tw = create_tween()
+	tw.tween_property(label, "position:y", label.position.y + 1.0, 1.2)
+	tw.parallel().tween_property(label, "modulate:a", 0.0, 1.2)
+	tw.tween_callback(label.queue_free)
 
 
 func _pick_new_state() -> void:
@@ -326,6 +374,54 @@ func _build_buffalo_mesh() -> void:
 	tm.material_override = mat_skin
 	tm.position = Vector3(0, -0.38, 0)
 	tail_pivot.add_child(tm)
+
+	# Traditional Cambodian Wooden Rice Plow (Angkoal / អង្គល់)
+	plow_pivot = Node3D.new()
+	plow_pivot.name = "PlowPivot"
+	plow_pivot.position = Vector3(0, 0.35, -1.25)
+	plow_pivot.rotation_degrees.x = -15.0 # Raised by default
+	torso.add_child(plow_pivot)
+
+	var mat_plow_wood := StandardMaterial3D.new()
+	mat_plow_wood.albedo_color = Color(0.42, 0.28, 0.16)
+	mat_plow_wood.roughness = 0.85
+
+	var mat_iron_blade := StandardMaterial3D.new()
+	mat_iron_blade.albedo_color = Color(0.22, 0.22, 0.25)
+	mat_iron_blade.roughness = 0.55
+
+	# Long angled beam extending backward
+	var beam := MeshInstance3D.new()
+	var beam_mesh := BoxMesh.new()
+	beam_mesh.size = Vector3(0.12, 0.12, 1.6)
+	beam.mesh = beam_mesh
+	beam.position = Vector3(0, -0.28, -0.7)
+	beam.rotation_degrees.x = -12.0
+	beam.material_override = mat_plow_wood
+	plow_pivot.add_child(beam)
+
+	# Iron plowshare blade at the bottom
+	var blade := MeshInstance3D.new()
+	var blade_mesh := BoxMesh.new()
+	blade_mesh.size = Vector3(0.35, 0.26, 0.45)
+	blade.mesh = blade_mesh
+	blade.position = Vector3(0, -0.65, -1.35)
+	blade.rotation_degrees.x = 22.0
+	blade.material_override = mat_iron_blade
+	plow_pivot.add_child(blade)
+
+	# Dual farmer control handles
+	for side in [-1.0, 1.0]:
+		var handle := MeshInstance3D.new()
+		var h_mesh := CylinderMesh.new()
+		h_mesh.top_radius = 0.025
+		h_mesh.bottom_radius = 0.035
+		h_mesh.height = 0.95
+		handle.mesh = h_mesh
+		handle.position = Vector3(side * 0.25, -0.15, -1.3)
+		handle.rotation_degrees = Vector3(28.0, 0, side * 15.0)
+		handle.material_override = mat_plow_wood
+		plow_pivot.add_child(handle)
 	
 	# 4 Sturdy Legs
 	leg_fl = _make_sturdy_leg(Vector3(-0.48, 0.7, 0.75), mat_skin, mat_horn)

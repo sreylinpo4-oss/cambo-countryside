@@ -113,7 +113,7 @@ func _setup_hud() -> void:
 	var hint = vbox.get_node_or_null("HintLabel") as Label
 	if hint:
 		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hint.text = "Move: WASD/Arrows | Jump: Space | Sprint: Shift | Interact/Ride/Harvest: E | Bell: Space/F | Time: T | Weather: R | Costume: C | View: V | Release/Capture: Esc / Click"
+		hint.text = "Move: WASD | Jump: Space | Sprint: Shift | Interact/Ride/Fish: E | Plow/Bell: F | Time: T | Weather: R | Photo Mode: P | Costume: C | View: V"
 
 
 func _spawn_bicycle() -> void:

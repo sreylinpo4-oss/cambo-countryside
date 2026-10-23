@@ -33,6 +33,8 @@ static func init_audio(parent: Node) -> void:
 	sound_cache["cast"] = _synth_cast()
 	sound_cache["bark"] = _synth_dog_bark()
 	sound_cache["blessing"] = _synth_blessing()
+	sound_cache["mud"] = _synth_mud_plow()
+	sound_cache["shutter"] = _synth_camera_shutter()
 	
 	# Create pool of AudioStreamPlayers
 	for i in range(8):
@@ -648,6 +650,69 @@ static func _synth_blessing() -> AudioStreamWAV:
 	var wav = _build_wav(total_samples)
 	wav.data = data
 	return wav
+
+
+static func _synth_mud_plow() -> AudioStreamWAV:
+	# Wet mud squelch and water churn of rice paddy plow
+	var duration = 0.42
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	var last_noise = 0.0
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var env = sin(PI * (t / duration))
+		var white = randf_range(-1.0, 1.0)
+		last_noise = (last_noise * 0.88) + (white * 0.12)
+
+		var bubble = sin(2.0 * PI * (90.0 + sin(t * 30.0) * 45.0) * t) * 0.35
+		var val = (last_noise * 0.6 + bubble * 0.4) * env * 0.55
+		val = clampf(val, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
+
+static func _synth_camera_shutter() -> AudioStreamWAV:
+	# Dual-click mechanical camera shutter
+	var duration = 0.22
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var val = 0.0
+
+		# Click 1: Mirror flip (t = 0.0 to 0.04)
+		if t < 0.04:
+			var env1 = exp(-t * 120.0)
+			val += sin(2.0 * PI * 1800.0 * t) * env1 * 0.65
+			val += randf_range(-0.3, 0.3) * env1
+
+		# Click 2: Shutter curtain (t = 0.07 to 0.14)
+		if t >= 0.07 and t < 0.14:
+			var dt = t - 0.07
+			var env2 = exp(-dt * 90.0)
+			val += sin(2.0 * PI * 2400.0 * dt) * env2 * 0.75
+			val += randf_range(-0.35, 0.35) * env2
+
+		val = clampf(val, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
 
 
 

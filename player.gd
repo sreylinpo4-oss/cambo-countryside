@@ -116,6 +116,10 @@ var lbl_fish: Label
 # Active Food Buffs, Fishing & Cooking State
 var is_cooking: bool = false
 var is_fishing: bool = false
+var is_photo_mode: bool = false
+var photo_ui: CanvasLayer = null
+var photo_zoom_label: Label = null
+var saved_camera_fov: float = 75.0
 var speed_buff_timer: float = 0.0
 var speed_buff_mult: float = 1.0
 var jump_buff_timer: float = 0.0
@@ -685,10 +689,32 @@ func _unhandled_input(event: InputEvent) -> void:
 			release_mouse()
 			return
 
+	# Photo Mode Input Handling
+	if is_photo_mode:
+		if event is InputEventMouseButton and event.pressed:
+			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+				camera.fov = clampf(camera.fov - 4.0, 25.0, 95.0)
+				_update_photo_zoom_ui()
+				return
+			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				camera.fov = clampf(camera.fov + 4.0, 25.0, 95.0)
+				_update_photo_zoom_ui()
+				return
+		if event is InputEventKey and event.pressed and not event.echo:
+			if event.keycode == KEY_P or event.is_action_pressed("ui_cancel"):
+				toggle_photo_mode()
+				return
+			elif event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
+				take_photo_snapshot()
+				return
+
 	# C key to toggle customization menu
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_C:
 			toggle_customization()
+			return
+		elif event.keycode == KEY_P:
+			toggle_photo_mode()
 			return
 		elif event.keycode == KEY_E:
 			# Interact or Dismount
@@ -1126,3 +1152,181 @@ func dismount_vehicle() -> void:
 	if old_veh is Node3D:
 		global_position = old_veh.global_position + old_veh.transform.basis.x * 1.5
 		global_position.y = maxf(global_position.y, 0.5)
+
+
+# -------------------------------------------------------------
+# COUNTRYSIDE PHOTO / POSTCARD MODE (THOT ROUB / ថតរូប)
+# -------------------------------------------------------------
+func toggle_photo_mode() -> void:
+	is_photo_mode = not is_photo_mode
+
+	if is_photo_mode:
+		saved_camera_fov = camera.fov
+
+		# Hide player customization UI
+		if custom_ui:
+			custom_ui.visible = false
+
+		# Hide world HUD
+		var parent_node = get_parent()
+		if parent_node:
+			var hud = parent_node.get_node_or_null("HUD")
+			if hud:
+				hud.visible = false
+
+		_create_photo_postcard_overlay()
+	else:
+		if photo_ui:
+			photo_ui.queue_free()
+			photo_ui = null
+
+		if custom_ui:
+			custom_ui.visible = true
+
+		var parent_node = get_parent()
+		if parent_node:
+			var hud = parent_node.get_node_or_null("HUD")
+			if hud:
+				hud.visible = true
+
+		if camera:
+			camera.fov = saved_camera_fov
+
+
+func _create_photo_postcard_overlay() -> void:
+	if photo_ui:
+		photo_ui.queue_free()
+
+	photo_ui = CanvasLayer.new()
+	photo_ui.name = "PhotoPostcardOverlay"
+	add_child(photo_ui)
+
+	# Golden Postcard Inset Border
+	var border := Panel.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0)
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.border_color = Color(0.92, 0.78, 0.45, 0.85) # Royal gold border
+	style.set_corner_radius_all(12)
+	border.add_theme_stylebox_override("panel", style)
+	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	border.set_anchors_preset(Control.PRESET_FULL_RECT)
+	border.anchor_left = 0.03
+	border.anchor_right = 0.97
+	border.anchor_top = 0.04
+	border.anchor_bottom = 0.96
+	photo_ui.add_child(border)
+
+	# Top Center: Postcard Header
+	var title_vbox := VBoxContainer.new()
+	title_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_vbox.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	title_vbox.anchor_left = 0.2
+	title_vbox.anchor_right = 0.8
+	title_vbox.anchor_top = 0.06
+	photo_ui.add_child(title_vbox)
+
+	var title := Label.new()
+	title.text = "GREETINGS FROM CAMBO COUNTRYSIDE"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.65))
+	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	title.add_theme_constant_override("shadow_offset_x", 1)
+	title.add_theme_constant_override("shadow_offset_y", 1)
+	title_vbox.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "អនុស្សាវរីយ៍ស្រុកស្រែខ្មែរ"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 15)
+	subtitle.add_theme_color_override("font_color", Color(0.95, 0.88, 0.75))
+	subtitle.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+	title_vbox.add_child(subtitle)
+
+	# Top Right: Postcard Stamp
+	var stamp := PanelContainer.new()
+	var stamp_style := StyleBoxFlat.new()
+	stamp_style.bg_color = Color(0.18, 0.16, 0.14, 0.85)
+	stamp_style.border_width_left = 1
+	stamp_style.border_width_top = 1
+	stamp_style.border_width_right = 1
+	stamp_style.border_width_bottom = 1
+	stamp_style.border_color = Color(0.9, 0.7, 0.35, 0.9)
+	stamp_style.set_content_margin_all(8)
+	stamp.add_theme_stylebox_override("panel", stamp_style)
+	stamp.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	stamp.anchor_left = 0.86
+	stamp.anchor_right = 0.95
+	stamp.anchor_top = 0.06
+	stamp.anchor_bottom = 0.14
+	photo_ui.add_child(stamp)
+
+	var stamp_lbl := Label.new()
+	stamp_lbl.text = "POST\n1500 R"
+	stamp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stamp_lbl.add_theme_font_size_override("font_size", 12)
+	stamp_lbl.add_theme_color_override("font_color", Color(0.95, 0.85, 0.6))
+	stamp.add_child(stamp_lbl)
+
+	# Bottom Center: Instruction & Zoom Bar
+	photo_zoom_label = Label.new()
+	photo_zoom_label.name = "PhotoControlsLabel"
+	photo_zoom_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	photo_zoom_label.add_theme_font_size_override("font_size", 14)
+	photo_zoom_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.85))
+	photo_zoom_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	photo_zoom_label.add_theme_constant_override("shadow_offset_x", 1)
+	photo_zoom_label.add_theme_constant_override("shadow_offset_y", 1)
+	photo_zoom_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	photo_zoom_label.anchor_left = 0.15
+	photo_zoom_label.anchor_right = 0.85
+	photo_zoom_label.anchor_bottom = 0.93
+	photo_ui.add_child(photo_zoom_label)
+
+	_update_photo_zoom_ui()
+
+
+func _update_photo_zoom_ui() -> void:
+	if photo_zoom_label:
+		photo_zoom_label.text = "[ Space / Enter ] Snap Postcard | [ Mouse Wheel ] Zoom: %d deg | [ P / Esc ] Exit Photo Mode" % int(camera.fov)
+
+
+func take_photo_snapshot() -> void:
+	AudioSynth.play("shutter", 3.0)
+
+	if not photo_ui:
+		return
+
+	# Camera flash effect
+	var flash := ColorRect.new()
+	flash.color = Color(1.0, 1.0, 1.0, 0.88)
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	photo_ui.add_child(flash)
+
+	var tw = photo_ui.create_tween()
+	tw.tween_property(flash, "modulate:a", 0.0, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(flash.queue_free)
+
+	# Snapshot confirmation toast
+	var toast := Label.new()
+	toast.text = "Postcard Snapshot Captured! (បានថតរូបអនុស្សាវរីយ៍)"
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.add_theme_font_size_override("font_size", 18)
+	toast.add_theme_color_override("font_color", Color(0.65, 1.0, 0.55))
+	toast.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+	toast.add_theme_constant_override("shadow_offset_x", 1)
+	toast.add_theme_constant_override("shadow_offset_y", 1)
+	toast.set_anchors_preset(Control.PRESET_CENTER)
+	toast.anchor_left = 0.2
+	toast.anchor_right = 0.8
+	toast.anchor_top = 0.45
+	photo_ui.add_child(toast)
+
+	var t_tw = photo_ui.create_tween()
+	t_tw.tween_interval(2.5)
+	t_tw.tween_property(toast, "modulate:a", 0.0, 0.8)
+	t_tw.tween_callback(toast.queue_free)
