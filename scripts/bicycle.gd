@@ -34,13 +34,17 @@ func _ready() -> void:
 	add_to_group("interactables")
 	_build_bicycle_mesh()
 	
-	# Solid collision
+	# Smooth capsule collision
 	var col = CollisionShape3D.new()
-	var box = BoxShape3D.new()
-	box.size = Vector3(0.6, 1.2, 1.9)
-	col.shape = box
-	col.position.y = 0.6
+	var cap = CapsuleShape3D.new()
+	cap.radius = 0.35
+	cap.height = 1.6
+	col.shape = cap
+	col.position.y = 0.8
 	add_child(col)
+
+	floor_snap_length = 0.4
+	floor_max_angle = deg_to_rad(45.0)
 
 
 func interact(player: Node) -> void:
@@ -53,7 +57,7 @@ func interact(player: Node) -> void:
 func mount(player: Node) -> void:
 	rider = player
 	is_ridden = true
-	interact_prompt = "Dismount Bicycle (ចុះពីលើកង់)"
+	interact_prompt = "Dismount [E] | Ring Bell [Space/F] | Sprint [Shift]"
 	kickstand.rotation_degrees.z = 0.0 # kickstand up
 	AudioSynth.play("bell", -2.0)
 	
@@ -97,45 +101,69 @@ func ring_bell() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
-		velocity.y -= 14.0 * delta
+		velocity.y -= 16.0 * delta
 	else:
 		velocity.y = 0.0
 
 	if is_ridden and rider != null:
-		var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-		
-		# Throttle forward / back
-		if input_dir.y < -0.1: # Forward (W)
-			current_speed = move_toward(current_speed, max_speed, acceleration * delta)
-		elif input_dir.y > 0.1: # Brake / Reverse (S)
-			current_speed = move_toward(current_speed, -max_speed * 0.35, braking * delta)
+		# Explicit WASD + Arrow Keys
+		var throttle_input := 0.0
+		if Input.is_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"):
+			throttle_input += 1.0
+		if Input.is_key_pressed(KEY_S) or Input.is_action_pressed("ui_down"):
+			throttle_input -= 1.0
+
+		var steer_input := 0.0
+		if Input.is_key_pressed(KEY_A) or Input.is_action_pressed("ui_left"):
+			steer_input += 1.0 # Steer left
+		if Input.is_key_pressed(KEY_D) or Input.is_action_pressed("ui_right"):
+			steer_input -= 1.0 # Steer right
+
+		var is_sprinting := Input.is_key_pressed(KEY_SHIFT)
+		var current_max_speed = 22.0 if is_sprinting else max_speed
+
+		# Throttle / Braking / Reversing
+		if throttle_input > 0.1: # Forward
+			var accel = (acceleration * 1.5) if is_sprinting else acceleration
+			current_speed = move_toward(current_speed, current_max_speed, accel * delta)
+		elif throttle_input < -0.1: # Reverse or Hard Brake
+			if current_speed > 0.5:
+				current_speed = move_toward(current_speed, 0.0, braking * 1.6 * delta)
+			else:
+				# Smooth reverse to push bike back out of obstacles
+				current_speed = move_toward(current_speed, -4.5, 7.0 * delta)
 		else:
-			# Coasting
-			current_speed = move_toward(current_speed, 0.0, 2.5 * delta)
-			
-		# Steering (A / D)
-		var target_steer = -input_dir.x * 0.65
-		steer_angle = lerp(steer_angle, target_steer, delta * 8.0)
-		
-		if absf(current_speed) > 0.2:
-			# Steer bicycle yaw
-			var turn_factor = (current_speed / max_speed)
-			rotate_y(steer_angle * turn_speed * delta * signf(current_speed))
-			
+			# Coasting friction
+			current_speed = move_toward(current_speed, 0.0, 3.2 * delta)
+
+		# Handlebar Steering
+		var target_steer = steer_input * 0.70
+		steer_angle = lerp(steer_angle, target_steer, delta * 10.0)
+
+		# Yaw turning
+		if absf(current_speed) > 0.1:
+			var speed_ratio = clampf(absf(current_speed) / 5.0, 0.4, 1.0)
+			var turn_dir = signf(current_speed)
+			rotate_y(steer_angle * turn_speed * speed_ratio * delta * turn_dir)
+
 			# Lean bike into turns
-			var target_lean = -steer_angle * clampf(absf(current_speed) / 6.0, 0.0, 1.0) * 18.0
-			lean_angle = lerp(lean_angle, target_lean, delta * 6.0)
+			var target_lean = -steer_angle * clampf(absf(current_speed) / 5.0, 0.0, 1.0) * 22.0
+			lean_angle = lerp(lean_angle, target_lean, delta * 7.0)
+		elif absf(steer_input) > 0.1:
+			# Gentle pivot turn when stopped so player never gets stuck facing an obstacle
+			rotate_y(steer_input * 2.0 * delta)
+			lean_angle = lerp(lean_angle, 0.0, delta * 6.0)
 		else:
 			lean_angle = lerp(lean_angle, 0.0, delta * 6.0)
-			
+
 		visual_root.rotation_degrees.z = lean_angle
 		front_fork.rotation_degrees.y = rad_to_deg(steer_angle)
-		
+
 		# Move velocity
 		var forward = -transform.basis.z * current_speed
 		velocity.x = forward.x
 		velocity.z = forward.z
-		
+
 		# Wheel and pedal rotations
 		wheel_spin += (current_speed / 0.38) * delta
 		front_wheel.rotation_degrees.x = rad_to_deg(wheel_spin)
@@ -149,7 +177,7 @@ func _physics_process(delta: float) -> void:
 		steer_angle = lerp(steer_angle, 0.0, delta * 4.0)
 		front_fork.rotation_degrees.y = 0.0
 		visual_root.rotation_degrees.z = 0.0
-		
+
 	move_and_slide()
 
 

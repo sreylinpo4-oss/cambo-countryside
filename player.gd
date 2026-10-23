@@ -775,10 +775,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# Mouse look during exploration
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * mouse_sensitivity)
-		if pivot:
-			pivot.rotate_x(-event.relative.y * mouse_sensitivity)
-			pivot.rotation.x = clamp(pivot.rotation.x, deg_to_rad(-70.0), deg_to_rad(55.0))
+		if current_vehicle != null:
+			if pivot:
+				pivot.rotate_y(-event.relative.x * mouse_sensitivity)
+				pivot.rotate_x(-event.relative.y * mouse_sensitivity)
+				pivot.rotation.x = clamp(pivot.rotation.x, deg_to_rad(-70.0), deg_to_rad(55.0))
+		else:
+			rotate_y(-event.relative.x * mouse_sensitivity)
+			if pivot:
+				pivot.rotate_x(-event.relative.y * mouse_sensitivity)
+				pivot.rotation.x = clamp(pivot.rotation.x, deg_to_rad(-70.0), deg_to_rad(55.0))
 
 	# V key to toggle 1st person / 3rd person view
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -837,6 +843,9 @@ func _physics_process(delta: float) -> void:
 
 		# Vehicle specific player posing
 		if current_vehicle is CountrysideBicycle:
+			if pivot and absf(current_vehicle.current_speed) > 0.4:
+				pivot.rotation.y = lerp_angle(pivot.rotation.y, 0.0, delta * 3.0)
+
 			if left_arm and right_arm:
 				left_arm.rotation_degrees.x = -55.0
 				right_arm.rotation_degrees.x = -55.0

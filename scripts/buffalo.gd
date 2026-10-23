@@ -99,19 +99,29 @@ func _physics_process(delta: float) -> void:
 
 
 func _handle_ridden(delta: float) -> void:
-	# Buffalo movement controlled by player input
-	var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-	
-	if input_dir.length() > 0.1:
-		# Steer
-		var steer = -input_dir.x * 2.2 * delta
-		rotate_y(steer)
-		
-		# Move forward / back
-		var forward = -transform.basis.z * (-input_dir.y)
-		velocity.x = forward.x * ridden_speed
-		velocity.z = forward.z * ridden_speed
-		
+	# Explicit WASD + Arrow Keys
+	var forward_input := 0.0
+	if Input.is_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"):
+		forward_input += 1.0
+	if Input.is_key_pressed(KEY_S) or Input.is_action_pressed("ui_down"):
+		forward_input -= 1.0
+
+	var steer_input := 0.0
+	if Input.is_key_pressed(KEY_A) or Input.is_action_pressed("ui_left"):
+		steer_input += 1.0
+	if Input.is_key_pressed(KEY_D) or Input.is_action_pressed("ui_right"):
+		steer_input -= 1.0
+
+	# Steer whenever turning input is active
+	if absf(steer_input) > 0.1:
+		rotate_y(steer_input * 2.2 * delta)
+
+	if absf(forward_input) > 0.1:
+		var speed = ridden_speed if forward_input > 0 else (ridden_speed * 0.45)
+		var forward = -transform.basis.z * forward_input
+		velocity.x = forward.x * speed
+		velocity.z = forward.z * speed
+
 		walk_time += delta * 6.0
 		leg_fl.rotation_degrees.x = sin(walk_time) * 25.0
 		leg_fr.rotation_degrees.x = -sin(walk_time) * 25.0

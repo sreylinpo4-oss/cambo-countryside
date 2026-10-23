@@ -402,7 +402,3 @@ func _spawn_village_npcs() -> void:
 	ming_bopha.position = Vector3(-22.8, 0.05, 7.2)
 	ming_bopha.rotation_degrees.y = 80.0
 	add_child(ming_bopha)
-
-
-
-
