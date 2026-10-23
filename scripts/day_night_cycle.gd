@@ -35,16 +35,56 @@ func setup(p_light: DirectionalLight3D, p_env: WorldEnvironment) -> void:
 
 func _process(delta: float) -> void:
 	if not is_paused:
+		var old_h = time_of_day
 		time_of_day += day_speed * delta
 		if time_of_day >= 24.0:
 			time_of_day -= 24.0
+		_check_pagoda_bell(old_h, time_of_day)
 			
 	_update_lighting(delta)
 
 
 func advance_time(hours: float = 4.0) -> void:
+	var old_h = time_of_day
 	time_of_day = fmod(time_of_day + hours, 24.0)
+	_check_pagoda_bell(old_h, time_of_day)
 	_update_lighting(0.0)
+
+
+func _check_pagoda_bell(old_hour: float, new_hour: float) -> void:
+	# Check crossing 6.0 AM (Dawn)
+	if (old_hour < 6.0 and new_hour >= 6.0) or (old_hour > 20.0 and new_hour >= 6.0 and new_hour < 7.0):
+		_ring_pagoda_bell("Dawn Pagoda Bell (ជួងវត្តពេលព្រឹក)")
+	# Check crossing 18.0 (6:00 PM Dusk)
+	elif (old_hour < 18.0 and new_hour >= 18.0):
+		_ring_pagoda_bell("Dusk Pagoda Bell (ជួងវត្តពេលល្ងាច)")
+
+
+func _ring_pagoda_bell(title: String) -> void:
+	AudioSynth.play("pagoda_bell", 2.0, 1.0)
+	var parent_world = get_parent()
+	if parent_world:
+		var hud = parent_world.get_node_or_null("HUD")
+		if hud:
+			var banner = Label.new()
+			banner.text = title
+			banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			banner.add_theme_font_size_override("font_size", 18)
+			banner.add_theme_color_override("font_color", Color(1.0, 0.92, 0.6))
+			banner.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+			banner.add_theme_constant_override("shadow_offset_x", 1)
+			banner.add_theme_constant_override("shadow_offset_y", 1)
+			banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+			banner.anchor_left = 0.3
+			banner.anchor_right = 0.7
+			banner.anchor_top = 0.12
+			hud.add_child(banner)
+			
+			var tw = hud.create_tween()
+			tw.tween_interval(3.5)
+			tw.tween_property(banner, "modulate:a", 0.0, 1.2)
+			tw.tween_callback(banner.queue_free)
 
 
 func get_time_string() -> String:

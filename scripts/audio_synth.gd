@@ -24,6 +24,7 @@ static func init_audio(parent: Node) -> void:
 	sound_cache["splash"] = _synth_splash()
 	sound_cache["ambient_day"] = _synth_ambient_day()
 	sound_cache["ambient_night"] = _synth_ambient_night()
+	sound_cache["pagoda_bell"] = _synth_pagoda_bell()
 	
 	# Create pool of AudioStreamPlayers
 	for i in range(8):
@@ -378,3 +379,33 @@ static func _synth_ambient_night() -> AudioStreamWAV:
 	var wav = _build_wav(total_samples, true)
 	wav.data = data
 	return wav
+
+
+static func _synth_pagoda_bell() -> AudioStreamWAV:
+	# Deep, resonant bronze temple bell with rich harmonic decay
+	var duration = 4.0
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var env = exp(-t * 0.95)
+		# Fundamental F3 (174.6Hz), octaves and non-harmonic bell partials
+		var val = (
+			sin(2.0 * PI * 174.6 * t) * 0.50 +
+			sin(2.0 * PI * 349.2 * t) * 0.28 +
+			sin(2.0 * PI * 524.0 * t) * 0.16 +
+			sin(2.0 * PI * 873.0 * t) * 0.10 +
+			sin(2.0 * PI * 1222.0 * t) * 0.05
+		) * env
+		val = clampf(val * 0.52, -1.0, 1.0)
+		var ival = clampi(int(val * 32000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+

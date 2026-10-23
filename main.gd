@@ -8,6 +8,9 @@ const VillageChicken = preload("res://scripts/chicken.gd")
 const CountrysideHammock = preload("res://scripts/hammock.gd")
 const CountrysideBicycle = preload("res://scripts/bicycle.gd")
 const HarvestableItem = preload("res://scripts/harvestable.gd")
+const CountrysideFireflies = preload("res://scripts/fireflies.gd")
+const CountrysideSmokeFX = preload("res://scripts/smoke_fx.gd")
+const CountrysideSignpost = preload("res://scripts/signpost.gd")
 
 # Cambo Countryside - Main World Controller
 var day_night: DayNightCycle
@@ -28,6 +31,9 @@ func _ready() -> void:
 	_spawn_water_buffaloes()
 	_spawn_chickens()
 	_spawn_harvestables()
+	_spawn_fireflies()
+	_spawn_smoke_fx()
+	_spawn_signposts()
 	
 	# 4. Enhance HUD with Time Display & Key Guides
 	_setup_hud()
@@ -195,3 +201,105 @@ func make_material(color: Color) -> StandardMaterial3D:
 	var material = StandardMaterial3D.new()
 	material.albedo_color = color
 	return material
+
+
+func _spawn_fireflies() -> void:
+	# Swarm 1: Lotus pond
+	var ff1 = CountrysideFireflies.new()
+	ff1.name = "Fireflies_Pond"
+	ff1.position = Vector3(-24.5, 0.3, -18.0)
+	ff1.radius = 7.5
+	ff1.firefly_count = 20
+	add_child(ff1)
+
+	# Swarm 2: East rice paddy
+	var ff2 = CountrysideFireflies.new()
+	ff2.name = "Fireflies_EastPaddy"
+	ff2.position = Vector3(26.0, 0.4, 10.0)
+	ff2.radius = 9.0
+	ff2.firefly_count = 22
+	add_child(ff2)
+
+	# Swarm 3: South rice paddy & shade trees
+	var ff3 = CountrysideFireflies.new()
+	ff3.name = "Fireflies_SouthPaddy"
+	ff3.position = Vector3(22.0, 0.4, -26.0)
+	ff3.radius = 8.5
+	ff3.firefly_count = 18
+	add_child(ff3)
+
+	# Swarm 4: Banana grove near stilt house
+	var ff4 = CountrysideFireflies.new()
+	ff4.name = "Fireflies_HouseGrove"
+	ff4.position = Vector3(-16.0, 0.4, -3.0)
+	ff4.radius = 6.0
+	ff4.firefly_count = 15
+	add_child(ff4)
+
+
+func _spawn_smoke_fx() -> void:
+	# Clay stove cooking hearth near the stilt house
+	var hearth = Node3D.new()
+	hearth.name = "VillageCookingHearth"
+	hearth.position = Vector3(-21.8, 0.05, 8.2)
+	add_child(hearth)
+
+	# Clay stove base mesh
+	var stove_mesh := CylinderMesh.new()
+	stove_mesh.top_radius = 0.32
+	stove_mesh.bottom_radius = 0.36
+	stove_mesh.height = 0.42
+	var stove_inst := MeshInstance3D.new()
+	stove_inst.mesh = stove_mesh
+	stove_inst.position.y = 0.21
+	var stove_mat := StandardMaterial3D.new()
+	stove_mat.albedo_color = Color(0.68, 0.42, 0.28) # Terracotta clay
+	stove_mat.roughness = 0.92
+	stove_inst.material_override = stove_mat
+	hearth.add_child(stove_inst)
+
+	# Clay cooking pot on top
+	var pot_mesh := CylinderMesh.new()
+	pot_mesh.top_radius = 0.26
+	pot_mesh.bottom_radius = 0.22
+	pot_mesh.height = 0.28
+	var pot_inst := MeshInstance3D.new()
+	pot_inst.mesh = pot_mesh
+	pot_inst.position.y = 0.52
+	var pot_mat := StandardMaterial3D.new()
+	pot_mat.albedo_color = Color(0.22, 0.20, 0.18) # Soot blackened clay pot
+	pot_inst.material_override = pot_mat
+	hearth.add_child(pot_inst)
+
+	# Smoke FX rising from the pot
+	var smoke = CountrysideSmokeFX.new()
+	smoke.position = Vector3(0, 0.65, 0)
+	hearth.add_child(smoke)
+
+
+func _spawn_signposts() -> void:
+	# Signpost 1: Crossroads where main dirt road branches toward the house
+	var sign1 = CountrysideSignpost.new()
+	sign1.name = "Signpost_MainFork"
+	sign1.position = Vector3(-1.6, 0.0, 5.8)
+	sign1.rotation_degrees.y = -20.0
+	sign1.sign_title = "Village Crossroads"
+	sign1.sign_khmer = "ផ្លូវបំបែកភូមិ"
+	sign1.sign_directions = [
+		"<- Stilt House (ផ្ទះខ្មែរ) | Lotus Pond (បឹងឈូក)",
+		"Rice Fields (វាលស្រែ) -> | Pasture (វាលស្មៅ)"
+	]
+	add_child(sign1)
+
+	# Signpost 2: Near trail fork to Sacred Lotus Pond & Granary
+	var sign2 = CountrysideSignpost.new()
+	sign2.name = "Signpost_PondTrail"
+	sign2.position = Vector3(-18.5, 0.0, -8.0)
+	sign2.rotation_degrees.y = 65.0
+	sign2.sign_title = "Pond & Granary Trail"
+	sign2.sign_khmer = "ផ្លូវទៅបឹងឈូក និង ជង្រុកស្រូវ"
+	sign2.sign_directions = [
+		"<- Sacred Lotus Pond (បឹងឈូក)",
+		"Rice Granary (ជង្រុកស្រូវ) ->"
+	]
+	add_child(sign2)
