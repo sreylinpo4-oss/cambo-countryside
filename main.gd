@@ -17,6 +17,7 @@ const CountrysideFishingSpot = preload("res://scripts/fishing_spot.gd")
 const VillageDog = preload("res://scripts/village_dog.gd")
 const CountrysideMonkProcession = preload("res://scripts/monk_procession.gd")
 const CountrysideRoneatEk = preload("res://scripts/roneat_instrument.gd")
+const VillageNPC = preload("res://scripts/village_npc.gd")
 
 # Cambo Countryside - Main World Controller
 var day_night: DayNightCycle
@@ -47,6 +48,7 @@ func _ready() -> void:
 	_spawn_monk_procession()
 	_spawn_roneat()
 	_setup_water_ambience()
+	_spawn_village_npcs()
 	
 	# 4. Enhance HUD with Time Display & Key Guides
 	_setup_hud()
@@ -360,6 +362,47 @@ func _setup_water_ambience() -> void:
 	canal_audio.volume_db = -7.0
 	add_child(canal_audio)
 	canal_audio.play()
+
+
+func _spawn_village_npcs() -> void:
+	# 1. Grandfather Sok (Ta Sok) resting in the stilt house yard
+	var ta_sok = VillageNPC.new()
+	ta_sok.name = "NPC_TaSok"
+	ta_sok.npc_name = "Ta Sok (តាសុខ)"
+	ta_sok.npc_role = "Village Elder (ចាស់ទុំភូមិ)"
+	ta_sok.greeting_text = "Peace and long life to you, grandchild. (ជម្រាបសួរចៅ)"
+	ta_sok.quest_text = "The monks are walking their morning alms round. Could you bring 1 fresh Coconut to help with the morning offering?"
+	ta_sok.quest_item = "coconut"
+	ta_sok.quest_item_amount = 1
+	ta_sok.reward_item = "banana"
+	ta_sok.reward_amount = 2
+	ta_sok.completed_text = "Sadhu! May the merit of this offering bring peace and prosperity to your steps. (សូមឲ្យបានសេចក្តីសុខ)"
+	ta_sok.shirt_color = Color(0.90, 0.88, 0.82) # Cotton white
+	ta_sok.pants_color = Color(0.18, 0.20, 0.25)
+	ta_sok.krama_color = Color(0.85, 0.22, 0.22) # Red checkered krama
+	ta_sok.position = Vector3(-17.2, 0.05, 5.2)
+	ta_sok.rotation_degrees.y = 40.0
+	add_child(ta_sok)
+
+	# 2. Auntie Bopha (Ming Bopha) near the outdoor cooking station
+	var ming_bopha = VillageNPC.new()
+	ming_bopha.name = "NPC_MingBopha"
+	ming_bopha.npc_name = "Ming Bopha (មីងបុប្ផា)"
+	ming_bopha.npc_role = "Countryside Cook (ចុងភៅស្រុកស្រែ)"
+	ming_bopha.greeting_text = "Welcome! The charcoal stove is burning warm today. (សួស្តីក្មួយ)"
+	ming_bopha.quest_text = "I am preparing grilled catfish with kroeung herb paste. Could you catch 1 fresh fish from the pond or paddy canal for me?"
+	ming_bopha.quest_item = "fish"
+	ming_bopha.quest_item_amount = 1
+	ming_bopha.reward_item = "coconut"
+	ming_bopha.reward_amount = 2
+	ming_bopha.completed_text = "Thank you so much! Here are fresh coconuts from our palm tree. Eat well! (ញ៉ាំឲ្យឆ្ងាញ់)"
+	ming_bopha.shirt_color = Color(0.24, 0.52, 0.32) # Herb green shirt
+	ming_bopha.pants_color = Color(0.22, 0.24, 0.45) # Indigo blue sampot
+	ming_bopha.krama_color = Color(0.20, 0.35, 0.65) # Blue krama
+	ming_bopha.position = Vector3(-22.8, 0.05, 7.2)
+	ming_bopha.rotation_degrees.y = 80.0
+	add_child(ming_bopha)
+
 
 
 
