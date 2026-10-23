@@ -4,6 +4,7 @@ class_name CountrysideSmokeFX
 # Soft rising smoke particles for traditional countryside hearth
 @export var max_puffs: int = 14
 @export var spawn_rate: float = 0.35 # seconds between puffs
+@export var smoke_color: Color = Color(0.85, 0.83, 0.80, 0.35)
 
 class SmokePuff:
 	var mesh_inst: MeshInstance3D
@@ -20,7 +21,7 @@ var smoke_mat: StandardMaterial3D
 func _ready() -> void:
 	smoke_mat = StandardMaterial3D.new()
 	smoke_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-	smoke_mat.albedo_color = Color(0.85, 0.83, 0.80, 0.35)
+	smoke_mat.albedo_color = smoke_color
 	smoke_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	smoke_mat.roughness = 0.95
 

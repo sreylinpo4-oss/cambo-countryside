@@ -31,6 +31,8 @@ static func init_audio(parent: Node) -> void:
 	sound_cache["sizzle"] = _synth_sizzle()
 	sound_cache["eat"] = _synth_eat()
 	sound_cache["cast"] = _synth_cast()
+	sound_cache["bark"] = _synth_dog_bark()
+	sound_cache["blessing"] = _synth_blessing()
 	
 	# Create pool of AudioStreamPlayers
 	for i in range(8):
@@ -578,6 +580,75 @@ static func _synth_cast() -> AudioStreamWAV:
 	var wav = _build_wav(total_samples)
 	wav.data = data
 	return wav
+
+
+static func _synth_dog_bark() -> AudioStreamWAV:
+	# Friendly Cambodian village dog woof
+	var duration = 0.28
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	var last_noise = 0.0
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var progress = t / duration
+		var env = sin(PI * progress) * (1.0 - progress * 0.4)
+
+		# Pitch contour: fast rise and fall
+		var freq = 310.0 + sin(progress * PI) * 220.0
+		var tone1 = sin(2.0 * PI * freq * t)
+		var tone2 = sin(2.0 * PI * freq * 1.95 * t) * 0.35
+		var white = randf_range(-1.0, 1.0)
+		last_noise = (last_noise * 0.7) + (white * 0.3)
+
+		var val = (tone1 * 0.55 + tone2 * 0.25 + last_noise * 0.20) * env * 0.6
+		val = clampf(val, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
+
+static func _synth_blessing() -> AudioStreamWAV:
+	# Resonant Buddhist meditation singing bowl & bronze prayer bell
+	var duration = 3.6
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var env = exp(-t * 0.85)
+
+		# Warm meditation bowl harmonics with slow spiritual shimmer
+		var f1 = 220.0 # A3 warm base
+		var f2 = 442.0 # Gentle shimmer beat
+		var f3 = 660.0 # Perfect fifth overtone
+		var f4 = 1100.0 # Chime high harmonic
+
+		var shimmer = 1.0 + 0.15 * sin(2.0 * PI * 1.8 * t)
+		var val = (
+			sin(2.0 * PI * f1 * t) * 0.45 * shimmer +
+			sin(2.0 * PI * f2 * t) * 0.25 +
+			sin(2.0 * PI * f3 * t) * 0.18 +
+			sin(2.0 * PI * f4 * t) * 0.12 * exp(-t * 2.0)
+		) * env * 0.5
+
+		val = clampf(val, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
 
 
 

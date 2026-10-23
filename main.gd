@@ -14,6 +14,8 @@ const CountrysideSignpost = preload("res://scripts/signpost.gd")
 const WeatherSystem = preload("res://scripts/weather_system.gd")
 const CountrysideCookingStation = preload("res://scripts/cooking_station.gd")
 const CountrysideFishingSpot = preload("res://scripts/fishing_spot.gd")
+const VillageDog = preload("res://scripts/village_dog.gd")
+const CountrysideMonkProcession = preload("res://scripts/monk_procession.gd")
 
 # Cambo Countryside - Main World Controller
 var day_night: DayNightCycle
@@ -40,6 +42,8 @@ func _ready() -> void:
 	_spawn_cooking_station()
 	_spawn_signposts()
 	_spawn_fishing_spots()
+	_spawn_village_dog()
+	_spawn_monk_procession()
 	
 	# 4. Enhance HUD with Time Display & Key Guides
 	_setup_hud()
@@ -304,4 +308,21 @@ func _spawn_fishing_spots() -> void:
 	spot2.position = Vector3(17.8, 0.05, 8.2)
 	spot2.rotation_degrees.y = -90.0
 	add_child(spot2)
+
+
+func _spawn_village_dog() -> void:
+	# Friendly caramel-coated Cambodian village dog in front yard of stilt house
+	var dog = VillageDog.new()
+	dog.name = "CambodianVillageDog"
+	dog.position = Vector3(-13.5, 0.1, 4.2)
+	dog.rotation_degrees.y = -45.0
+	add_child(dog)
+
+
+func _spawn_monk_procession() -> void:
+	# Morning Buddhist monks' alms procession in single file along village dirt road
+	var monks = CountrysideMonkProcession.new()
+	monks.name = "MonkProcession"
+	add_child(monks)
+
 
