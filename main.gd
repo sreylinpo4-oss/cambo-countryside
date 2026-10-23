@@ -11,9 +11,11 @@ const HarvestableItem = preload("res://scripts/harvestable.gd")
 const CountrysideFireflies = preload("res://scripts/fireflies.gd")
 const CountrysideSmokeFX = preload("res://scripts/smoke_fx.gd")
 const CountrysideSignpost = preload("res://scripts/signpost.gd")
+const WeatherSystem = preload("res://scripts/weather_system.gd")
 
 # Cambo Countryside - Main World Controller
 var day_night: DayNightCycle
+var weather: WeatherSystem
 var time_label: Label
 var player_ref: Node
 
@@ -21,8 +23,9 @@ func _ready() -> void:
 	# 1. Initialize Audio Synthesizer (SFX & Day/Night Ambiance)
 	AudioSynth.init_audio(self)
 	
-	# 2. Setup Dynamic Day / Night Cycle
+	# 2. Setup Dynamic Day / Night Cycle & Tropical Weather
 	_setup_day_night()
+	_setup_weather()
 	
 	# 3. Setup World Entities
 	_spawn_bicycle()
@@ -49,6 +52,16 @@ func _setup_day_night() -> void:
 	
 	day_night.setup(dir_light, world_env)
 	day_night.time_changed.connect(_on_time_changed)
+
+
+func _setup_weather() -> void:
+	weather = WeatherSystem.new()
+	weather.name = "WeatherSystem"
+	add_child(weather)
+
+	var dir_light = get_node_or_null("DirectionalLight3D") as DirectionalLight3D
+	var world_env = get_node_or_null("WorldEnvironment") as WorldEnvironment
+	weather.setup(dir_light, world_env)
 
 
 func _on_time_changed(time_str: String, is_night: bool) -> void:
@@ -93,7 +106,7 @@ func _setup_hud() -> void:
 	var hint = vbox.get_node_or_null("HintLabel") as Label
 	if hint:
 		hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hint.text = "Move: WASD/Arrows | Jump: Space | Sprint: Shift | Interact/Ride/Harvest: E | Bell: Space/F | Time: T | Costume: C | View: V | Release/Capture: Esc / Click"
+		hint.text = "Move: WASD/Arrows | Jump: Space | Sprint: Shift | Interact/Ride/Harvest: E | Bell: Space/F | Time: T | Weather: R | Costume: C | View: V | Release/Capture: Esc / Click"
 
 
 func _spawn_bicycle() -> void:

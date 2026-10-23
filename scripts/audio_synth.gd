@@ -6,6 +6,7 @@ static var sound_cache: Dictionary = {}
 static var sfx_players: Array[AudioStreamPlayer] = []
 static var ambient_day_player: AudioStreamPlayer
 static var ambient_night_player: AudioStreamPlayer
+static var ambient_rain_player: AudioStreamPlayer
 
 const MIX_RATE: int = 22050
 
@@ -25,6 +26,8 @@ static func init_audio(parent: Node) -> void:
 	sound_cache["ambient_day"] = _synth_ambient_day()
 	sound_cache["ambient_night"] = _synth_ambient_night()
 	sound_cache["pagoda_bell"] = _synth_pagoda_bell()
+	sound_cache["rain"] = _synth_rain()
+	sound_cache["thunder"] = _synth_thunder()
 	
 	# Create pool of AudioStreamPlayers
 	for i in range(8):
@@ -48,6 +51,14 @@ static func init_audio(parent: Node) -> void:
 	ambient_night_player.volume_db = -80.0
 	parent.add_child(ambient_night_player)
 	ambient_night_player.play()
+
+	# Ambient rain player
+	ambient_rain_player = AudioStreamPlayer.new()
+	ambient_rain_player.name = "Ambient_Rain"
+	ambient_rain_player.stream = sound_cache["rain"]
+	ambient_rain_player.volume_db = -80.0
+	parent.add_child(ambient_rain_player)
+	ambient_rain_player.play()
 
 
 static func play(sound_name: String, volume_db: float = -4.0, pitch_scale: float = 1.0) -> void:
@@ -77,6 +88,16 @@ static func update_ambience(is_night_factor: float) -> void:
 	if ambient_night_player:
 		var night_db = lerp(-60.0, -8.0, is_night_factor)
 		ambient_night_player.volume_db = night_db
+
+
+static func update_rain(rain_factor: float) -> void:
+	if ambient_rain_player:
+		if rain_factor > 0.02:
+			if not ambient_rain_player.playing:
+				ambient_rain_player.play()
+			ambient_rain_player.volume_db = lerp(-50.0, -8.0, rain_factor)
+		else:
+			ambient_rain_player.volume_db = -80.0
 
 
 # --- Waveform Synthesizers ---
@@ -408,4 +429,65 @@ static func _synth_pagoda_bell() -> AudioStreamWAV:
 	var wav = _build_wav(total_samples)
 	wav.data = data
 	return wav
+
+
+static func _synth_rain() -> AudioStreamWAV:
+	# 4-second seamless looped tropical rain patter
+	var duration = 4.0
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	var last_val = 0.0
+	for i in range(total_samples):
+		# Low-pass pink noise filter for soft rainfall
+		var white = randf_range(-1.0, 1.0)
+		last_val = (last_val * 0.88) + (white * 0.12)
+
+		# Droplet patter clicks
+		var droplet = 0.0
+		if (i % 340) == 0 and randf() > 0.45:
+			droplet = randf_range(-0.4, 0.4)
+
+		var val = clampf(last_val * 0.65 + droplet * 0.35, -1.0, 1.0)
+		var ival = clampi(int(val * 28000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples, true)
+	wav.data = data
+	return wav
+
+
+static func _synth_thunder() -> AudioStreamWAV:
+	# Deep, reverberating tropical thunder rumble
+	var duration = 3.6
+	var total_samples = int(MIX_RATE * duration)
+	var data = PackedByteArray()
+	data.resize(total_samples * 2)
+
+	var low_state = 0.0
+	for i in range(total_samples):
+		var t = float(i) / MIX_RATE
+		var env = exp(-t * 0.88)
+
+		var white = randf_range(-1.0, 1.0)
+		low_state = (low_state * 0.93) + (white * 0.07)
+
+		# Sub-bass rumble frequencies (42Hz, 68Hz)
+		var sub1 = sin(2.0 * PI * 42.0 * t + sin(t * 14.0) * 0.7) * 0.55
+		var sub2 = sin(2.0 * PI * 68.0 * t) * 0.35
+
+		var val = (low_state * 1.6 + sub1 + sub2) * env
+		val = clampf(val * 0.62, -1.0, 1.0)
+		var ival = clampi(int(val * 32000.0), -32768, 32767)
+		var uval = ival if ival >= 0 else ival + 65536
+		data[i * 2] = uval & 0xFF
+		data[i * 2 + 1] = (uval >> 8) & 0xFF
+
+	var wav = _build_wav(total_samples)
+	wav.data = data
+	return wav
+
 

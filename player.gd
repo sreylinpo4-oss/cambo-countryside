@@ -679,6 +679,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			if parent_node and parent_node.get("day_night") != null:
 				parent_node.day_night.advance_time(3.5)
 			return
+		elif event.keycode == KEY_R:
+			# Cycle weather (Clear -> Overcast -> Monsoon Rain -> Thunderstorm)
+			var parent_node = get_parent()
+			if parent_node and parent_node.get("weather") != null:
+				parent_node.weather.cycle_weather()
+			return
 
 	# When customizing, mouse drag spins the character
 	if is_customizing:
